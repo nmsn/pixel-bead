@@ -52,9 +52,6 @@ export function PixelCanvas({
       height: containerRef.current.clientHeight,
     });
 
-    // Initialize the app
-    app.init();
-
     // Create cells group (bottom layer)
     const cellsGroup = new Group();
     app.add(cellsGroup);
