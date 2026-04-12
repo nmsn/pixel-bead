@@ -55,18 +55,17 @@ export function pixelateImage(
   const { width: imgWidth, height: imgHeight, data } = imageData;
   const [cols, rows] = gridSize;
 
-  const cellW = Math.floor(imgWidth / cols);
-  const cellH = Math.floor(imgHeight / rows);
-
   const result: number[][] = [];
 
   for (let gridRow = 0; gridRow < rows; gridRow++) {
     const row: number[] = [];
     for (let gridCol = 0; gridCol < cols; gridCol++) {
-      const startCol = gridCol * cellW;
-      const startRow = gridRow * cellH;
-      const endCol = Math.min(startCol + cellW, imgWidth);
-      const endRow = Math.min(startRow + cellH, imgHeight);
+      // Proportional mapping ensures the full image is covered regardless of size ratio.
+      // Each cell samples at least 1 pixel (clamped), so no cell can be left empty due to rounding.
+      const startCol = Math.floor((gridCol / cols) * imgWidth);
+      const startRow = Math.floor((gridRow / rows) * imgHeight);
+      const endCol = Math.max(startCol + 1, Math.floor(((gridCol + 1) / cols) * imgWidth));
+      const endRow = Math.max(startRow + 1, Math.floor(((gridRow + 1) / rows) * imgHeight));
 
       const rgb = dominantColor(data, imgWidth, imgHeight, startCol, startRow, endCol, endRow);
 

@@ -25,6 +25,7 @@ export function App() {
   historyRef.current = { push, undo, redo, reset, canUndo, canRedo };
 
   const [isDragging, setIsDragging] = useState(false);
+  const sourceImageRef = useRef<ImageData | null>(null);
   const lastPushedRef = useRef<string>('');
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
@@ -69,6 +70,7 @@ export function App() {
   // Handle reset
   const handleReset = useCallback(() => {
     const emptyGrid = createEmptyGrid([32, 32]);
+    sourceImageRef.current = null;
     setGridSize([32, 32]);
     setGridData([]);
     setPanOffset({ x: 0, y: 0 });
@@ -80,6 +82,7 @@ export function App() {
   const handleFileDrop = useCallback(
     async (file: File) => {
       const imageData = await imageFileToImageData(file);
+      sourceImageRef.current = imageData;
       const gridData = pixelateImage(imageData, state.gridSize);
       setGridData(gridData);
       pushIfChanged(gridData, true);
@@ -200,7 +203,14 @@ export function App() {
         onToolChange={setTool}
         gridSize={state.gridSize}
         onGridSizeChange={(size) => {
-          setGridSize(size);
+          if (sourceImageRef.current) {
+            const gridData = pixelateImage(sourceImageRef.current, size);
+            setGridSize(size);
+            setGridData(gridData);
+            pushIfChanged(gridData, true);
+          } else {
+            setGridSize(size);
+          }
         }}
         onExport={() => {}}
         onReset={handleReset}
