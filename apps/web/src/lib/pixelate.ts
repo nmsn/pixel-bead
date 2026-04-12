@@ -18,34 +18,30 @@ export function dominantColor(
   startRow: number,
   endCol: number,
   endRow: number
-): RGB {
-  let totalR = 0;
-  let totalG = 0;
-  let totalB = 0;
-  let count = 0;
+): RGB | null {
+  const colorCount = new Map<string, number>();
 
   for (let row = startRow; row < endRow; row++) {
     for (let col = startCol; col < endCol; col++) {
       const idx = (row * imgWidth + col) * 4;
       const alpha = data[idx + 3];
       if (alpha === 0) continue;
-
-      totalR += data[idx];
-      totalG += data[idx + 1];
-      totalB += data[idx + 2];
-      count++;
+      const key = `${data[idx]},${data[idx + 1]},${data[idx + 2]}`;
+      colorCount.set(key, (colorCount.get(key) || 0) + 1);
     }
   }
 
-  if (count === 0) {
-    return { r: 0, g: 0, b: 0 };
+  let maxCount = 0;
+  let dominant: RGB | null = null;
+  for (const [key, count] of colorCount) {
+    if (count > maxCount) {
+      maxCount = count;
+      const [r, g, b] = key.split(',').map(Number);
+      dominant = { r, g, b };
+    }
   }
 
-  return {
-    r: Math.floor(totalR / count),
-    g: Math.floor(totalG / count),
-    b: Math.floor(totalB / count),
-  };
+  return dominant;
 }
 
 /**
@@ -85,6 +81,8 @@ export function pixelateImage(
 
       if (isTransparent) {
         row.push(-1);
+      } else if (rgb === null) {
+        row.push(-1);
       } else {
         const hex = nearestColor(rgb.r, rgb.g, rgb.b);
         const idx = paletteIndex(hex);
@@ -102,9 +100,7 @@ export function pixelateImage(
  */
 export async function imageFileToImageData(file: File): Promise<ImageData> {
   const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(bitmap, 0, 0);
   return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
