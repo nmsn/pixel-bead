@@ -1,6 +1,6 @@
 export async function exportToIcns(gridData: number[][], gridSize: [number, number]): Promise<void> {
-  const sizes = [128, 256, 512, 1024];
-  const typeMap: Record<number, string> = { 128: 'ic07', 256: 'ic08', 512: 'ic09', 1024: 'ic10' };
+  const sizes = [16, 32, 64, 128, 256, 512, 1024];
+  const typeMap: Record<number, string> = { 16: 'ic04', 32: 'ic05', 64: 'ic06', 128: 'ic07', 256: 'ic08', 512: 'ic09', 1024: 'ic10' };
 
   function dataUrlToBuffer(dataUrl: string): ArrayBuffer {
     const base64 = dataUrl.split(',')[1];
