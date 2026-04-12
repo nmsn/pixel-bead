@@ -1,7 +1,6 @@
 interface SelectionPanelProps {
   selectedCells: Set<string>;
   selectionStyle: 'outline' | 'overlay' | 'inset';
-  currentColorIndex: number;
   onStyleChange: (style: 'outline' | 'overlay' | 'inset') => void;
   onColorChange: () => void;
   onSelectAllByColor: () => void;
