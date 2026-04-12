@@ -1,0 +1,85 @@
+import { useState, useCallback } from 'react';
+import { Tool } from 'shared/src/types';
+
+export interface PixelCanvasState {
+  gridData: number[][];
+  gridSize: [number, number];
+  tool: Tool;
+  currentColorIndex: number;
+  zoom: number;
+}
+
+export function usePixelCanvas() {
+  const [state, setState] = useState<PixelCanvasState>({
+    gridData: [],
+    gridSize: [32, 32],
+    tool: 'pen',
+    currentColorIndex: 0,
+    zoom: 1,
+  });
+
+  const setGridData = useCallback((data: number[][]) => {
+    setState((s) => ({ ...s, gridData: data }));
+  }, []);
+
+  const setGridSize = useCallback((size: [number, number]) => {
+    setState((s) => ({ ...s, gridSize: size }));
+  }, []);
+
+  const setTool = useCallback((tool: Tool) => {
+    setState((s) => ({ ...s, tool }));
+  }, []);
+
+  const setCurrentColorIndex = useCallback((idx: number) => {
+    setState((s) => ({ ...s, currentColorIndex: idx }));
+  }, []);
+
+  const setZoom = useCallback((zoom: number) => {
+    setState((s) => ({ ...s, zoom }));
+  }, []);
+
+  const updateCell = useCallback((row: number, col: number, value: number) => {
+    setState((s) => {
+      const newData = s.gridData.map((r) => [...r]);
+      newData[row][col] = value;
+      return { ...s, gridData: newData };
+    });
+  }, []);
+
+  const floodFill = useCallback((row: number, col: number, newColor: number) => {
+    setState((s) => {
+      const data = s.gridData.map((r) => [...r]);
+      const targetColor = data[row][col];
+      if (targetColor === newColor) return s;
+
+      const queue: [number, number][] = [[row, col]];
+      const visited = new Set<string>();
+
+      while (queue.length > 0) {
+        const [r, c] = queue.shift()!;
+        const key = `${r},${c}`;
+        if (visited.has(key)) continue;
+        if (r < 0 || r >= data.length || c < 0 || c >= data[0].length) continue;
+        if (data[r][c] !== targetColor) continue;
+
+        visited.add(key);
+        data[r][c] = newColor;
+
+        queue.push([r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]);
+      }
+
+      return { ...s, gridData: data };
+    });
+  }, []);
+
+  return {
+    state,
+    setGridData,
+    setGridSize,
+    setTool,
+    setCurrentColorIndex,
+    setZoom,
+    updateCell,
+    floodFill,
+  };
+}
