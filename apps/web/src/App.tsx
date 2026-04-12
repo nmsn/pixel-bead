@@ -3,6 +3,7 @@ import { PixelCanvas } from './components/canvas/PixelCanvas';
 import { TopToolbar } from './components/toolbar/TopToolbar';
 import { ExportPanel } from './components/panels/ExportPanel';
 import { ColorPalette } from './components/panels/ColorPalette';
+import { SelectionPanel } from './components/panels/SelectionPanel';
 import { usePixelCanvas } from './hooks/usePixelCanvas';
 import { useHistory } from './hooks/useHistory';
 import { imageFileToImageData, pixelateImage } from './lib/pixelate';
@@ -17,7 +18,8 @@ function createEmptyGrid(size: [number, number]): number[][] {
 }
 
 export function App() {
-  const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill } =
+  const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
+  toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -45,6 +47,7 @@ export function App() {
         const parsed = JSON.parse(saved);
         setGridData(parsed.gridData);
         setGridSize(parsed.gridSize);
+        if (parsed.selectionStyle) setSelectionStyle(parsed.selectionStyle);
         push(parsed.gridData, true);
       } catch {
         // ignore
@@ -61,33 +64,36 @@ export function App() {
           version: 1,
           gridData: state.gridData,
           gridSize: state.gridSize,
+          selectionStyle: state.selectionStyle,
           lastModified: Date.now(),
         })
       );
     }
-  }, [state.gridData, state.gridSize]);
+  }, [state.gridData, state.gridSize, state.selectionStyle]);
 
   // Handle reset
   const handleReset = useCallback(() => {
     const emptyGrid = createEmptyGrid([32, 32]);
     sourceImageRef.current = null;
+    clearSelection();
     setGridSize([32, 32]);
     setGridData([]);
     setPanOffset({ x: 0, y: 0 });
     reset(emptyGrid);
     localStorage.removeItem(STORAGE_KEY);
-  }, [setGridData, setGridSize, reset]);
+  }, [setGridData, setGridSize, reset, clearSelection]);
 
   // Handle file upload
   const handleFileDrop = useCallback(
     async (file: File) => {
+      clearSelection();
       const imageData = await imageFileToImageData(file);
       sourceImageRef.current = imageData;
       const gridData = pixelateImage(imageData, state.gridSize);
       setGridData(gridData);
       pushIfChanged(gridData, true);
     },
-    [state.gridSize]
+    [state.gridSize, clearSelection]
   );
 
   // Handle cell interaction
@@ -168,6 +174,13 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Clear selection when tool changes away from select
+  useEffect(() => {
+    if (state.tool !== 'select') {
+      clearSelection();
+    }
+  }, [state.tool]);
+
   // Export handlers
   const handleExportPng = useCallback(
     (size: number) => exportToPng(state.gridData, state.gridSize, size),
@@ -203,6 +216,7 @@ export function App() {
         onToolChange={setTool}
         gridSize={state.gridSize}
         onGridSizeChange={(size) => {
+          clearSelection();
           if (sourceImageRef.current) {
             const gridData = pixelateImage(sourceImageRef.current, size);
             setGridSize(size);
@@ -273,6 +287,10 @@ export function App() {
             panOffset={panOffset}
             onPanChange={setPanOffset}
             onZoomChange={setZoom}
+            selectedCells={state.selectedCells}
+            selectionStyle={state.selectionStyle}
+            onToggleSelection={toggleCellSelection}
+            onAddToSelection={addToSelection}
           />
 
           {/* Hidden file input */}
@@ -290,6 +308,21 @@ export function App() {
 
         {/* Right panel */}
         <div className="flex flex-col">
+          {state.selectedCells.size > 0 && (
+            <SelectionPanel
+              selectedCells={state.selectedCells}
+              selectionStyle={state.selectionStyle}
+              onStyleChange={setSelectionStyle}
+              onColorChange={() => applyColorToSelection(state.currentColorIndex)}
+              onSelectAllByColor={() => {
+                const first = [...state.selectedCells][0];
+                if (!first) return;
+                const [r, c] = first.split(',').map(Number);
+                selectAllByColor(state.gridData[r][c]);
+              }}
+              onClearSelection={clearSelection}
+            />
+          )}
           <ExportPanel
             gridData={state.gridData}
             gridSize={state.gridSize}
