@@ -7,6 +7,8 @@ export interface PixelCanvasState {
   tool: Tool;
   currentColorIndex: number;
   zoom: number;
+  selectedCells: Set<string>;
+  selectionStyle: 'outline' | 'overlay' | 'inset';
 }
 
 export function usePixelCanvas() {
@@ -16,6 +18,8 @@ export function usePixelCanvas() {
     tool: 'pen',
     currentColorIndex: 0,
     zoom: 1,
+    selectedCells: new Set<string>(),
+    selectionStyle: 'outline',
   });
 
   const setGridData = useCallback((data: number[][]) => {
@@ -82,6 +86,55 @@ export function usePixelCanvas() {
     });
   }, []);
 
+  const toggleCellSelection = useCallback((row: number, col: number) => {
+    setState((s) => {
+      const key = `${row},${col}`;
+      const next = new Set(s.selectedCells);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return { ...s, selectedCells: next };
+    });
+  }, []);
+
+  const addToSelection = useCallback((row: number, col: number) => {
+    setState((s) => {
+      const next = new Set(s.selectedCells);
+      next.add(`${row},${col}`);
+      return { ...s, selectedCells: next };
+    });
+  }, []);
+
+  const selectAllByColor = useCallback((colorIndex: number) => {
+    setState((s) => {
+      const next = new Set<string>();
+      s.gridData.forEach((row, r) =>
+        row.forEach((cell, c) => {
+          if (cell === colorIndex) next.add(`${r},${c}`);
+        })
+      );
+      return { ...s, selectedCells: next };
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setState((s) => ({ ...s, selectedCells: new Set() }));
+  }, []);
+
+  const applyColorToSelection = useCallback((colorIndex: number) => {
+    setState((s) => {
+      const newData = s.gridData.map((r) => [...r]);
+      s.selectedCells.forEach((key) => {
+        const [r, c] = key.split(',').map(Number);
+        newData[r][c] = colorIndex;
+      });
+      return { ...s, gridData: newData, selectedCells: new Set() };
+    });
+  }, []);
+
+  const setSelectionStyle = useCallback((style: 'outline' | 'overlay' | 'inset') => {
+    setState((s) => ({ ...s, selectionStyle: style }));
+  }, []);
+
   return {
     state,
     setGridData,
@@ -91,5 +144,11 @@ export function usePixelCanvas() {
     setZoom,
     updateCell,
     floodFill,
+    toggleCellSelection,
+    addToSelection,
+    selectAllByColor,
+    clearSelection,
+    applyColorToSelection,
+    setSelectionStyle,
   };
 }
