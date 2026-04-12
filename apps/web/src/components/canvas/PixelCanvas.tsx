@@ -52,16 +52,19 @@ export function PixelCanvas({
       height: containerRef.current.clientHeight,
     });
 
+    // Initialize the app
+    app.init();
+
     // Create cells group (bottom layer)
     const cellsGroup = new Group();
-    app.tree.add(cellsGroup);
+    app.add(cellsGroup);
     cellsGroupRef.current = cellsGroup;
 
     // Create grid group (top layer, pointer-events: none)
     const gridGroup = new Group();
     // Disable hit testing to make grid non-interactive
     gridGroup.hitRect = null;
-    app.tree.add(gridGroup);
+    app.add(gridGroup);
     gridGroupRef.current = gridGroup;
 
     appRef.current = app;
