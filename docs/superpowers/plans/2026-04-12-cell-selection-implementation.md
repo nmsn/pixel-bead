@@ -223,7 +223,7 @@ interface SelectionPanelProps {
   selectionStyle: 'outline' | 'overlay' | 'inset';
   currentColorIndex: number;
   onStyleChange: (style: 'outline' | 'overlay' | 'inset') => void;
-  onColorChange: (colorIndex: number) => void;
+  onColorChange: () => void;
   onSelectAllByColor: () => void;
   onClearSelection: () => void;
 }
@@ -373,7 +373,7 @@ const handleFileDrop = useCallback(
     sourceImageRef.current = imageData;
     // ...
   },
-  [state.gridSize] // add clearSelection to deps
+  [state.gridSize, clearSelection]
 );
 ```
 
