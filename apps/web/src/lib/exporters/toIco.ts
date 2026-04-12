@@ -3,10 +3,18 @@ import { PALETTE } from '../palette-256';
 // renderToCanvas is exported so toIcns.ts can reuse it
 export function renderToCanvas(gridData: number[][], gridSize: [number, number], outputSize: number): string {
   const [cols, rows] = gridSize;
+  if (cols <= 0 || rows <= 0 || outputSize <= 0) {
+    // Return empty canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    return canvas.toDataURL('image/png');
+  }
   const canvas = document.createElement('canvas');
   canvas.width = outputSize;
   canvas.height = outputSize;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas.toDataURL('image/png');
 
   const cellW = outputSize / cols;
   const cellH = outputSize / rows;

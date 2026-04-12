@@ -1,3 +1,5 @@
+import { renderToCanvas } from './toIco';
+
 export async function exportToIcns(gridData: number[][], gridSize: [number, number]): Promise<void> {
   const sizes = [16, 32, 64, 128, 256, 512, 1024];
   const typeMap: Record<number, string> = { 16: 'ic04', 32: 'ic05', 64: 'ic06', 128: 'ic07', 256: 'ic08', 512: 'ic09', 1024: 'ic10' };
@@ -11,7 +13,6 @@ export async function exportToIcns(gridData: number[][], gridSize: [number, numb
     return buf.buffer;
   }
 
-  const { renderToCanvas } = await import('./toIco');
   const dataUrls = sizes.map((size) => renderToCanvas(gridData, gridSize, size));
   const pngBuffers = dataUrls.map(dataUrlToBuffer);
 
