@@ -1,4 +1,4 @@
-import { nearestColor, PALETTE, paletteIndex } from './palette-256';
+import { nearestColor, paletteIndex } from './palette-256';
 
 export interface RGB {
   r: number;
@@ -70,18 +70,7 @@ export function pixelateImage(
 
       const rgb = dominantColor(data, imgWidth, imgHeight, startCol, startRow, endCol, endRow);
 
-      let isTransparent = true;
-      for (let r = startRow; r < endRow && isTransparent; r++) {
-        for (let c = startCol; c < endCol && isTransparent; c++) {
-          if (data[(r * imgWidth + c) * 4 + 3] !== 0) {
-            isTransparent = false;
-          }
-        }
-      }
-
-      if (isTransparent) {
-        row.push(-1);
-      } else if (rgb === null) {
+      if (rgb === null) {
         row.push(-1);
       } else {
         const hex = nearestColor(rgb.r, rgb.g, rgb.b);
