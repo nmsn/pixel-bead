@@ -349,26 +349,52 @@ const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom,
 onColorChange={() => applyColorToSelection(state.currentColorIndex)}
 ```
 
-- [ ] **Step 4: Clear selection on tool switch**
+- [ ] **Step 4: Clear selection on all four auto-clear triggers**
 
-In `setTool` wiring, ensure selection is cleared when switching away from `select`:
+Wire `clearSelection()` to all four triggers listed in the spec:
 
-```tsx
-onToolChange={(tool) => {
-  if (state.tool === 'select' && tool !== 'select') {
-    clearSelection();
-  }
-  setTool(tool);
-}}
-```
-
-Or add `useEffect` watching `state.tool`:
+**4a. Tool switch** — add `useEffect`:
 ```tsx
 useEffect(() => {
   if (state.tool !== 'select') {
     clearSelection();
   }
 }, [state.tool]);
+```
+
+**4b. `handleReset`** — `handleReset` already calls `setGridData([])`. Since `selectedCells` lives in `usePixelCanvas` state and `handleReset` reinitializes via `usePixelCanvas`, the selection auto-clears (new state object). No change needed if `handleReset` already triggers a re-render via `setGridData`. Verify `handleReset` in App.tsx calls `setGridData([])` which causes `usePixelCanvas` to re-initialize — if so, this is handled automatically.
+
+**4c. `handleFileDrop`** — add to existing handler:
+```tsx
+const handleFileDrop = useCallback(
+  async (file: File) => {
+    clearSelection(); // ← add this line
+    const imageData = await imageFileToImageData(file);
+    sourceImageRef.current = imageData;
+    // ...
+  },
+  [state.gridSize] // add clearSelection to deps
+);
+```
+
+**4d. `setGridSize`** — add to `onGridSizeChange` in TopToolbar prop:
+```tsx
+onGridSizeChange={(size) => {
+  clearSelection(); // ← add this line
+  // ... rest of existing logic
+}}
+```
+
+**Note on 4b:** If `handleReset` only calls `setGridData([])` and `setGridSize([32,32])` (not re-creating the `usePixelCanvas` state object), the `selectedCells` Set may persist. Add `clearSelection()` explicitly in `handleReset` to be safe:
+```tsx
+const handleReset = useCallback(() => {
+  const emptyGrid = createEmptyGrid([32, 32]);
+  sourceImageRef.current = null;
+  clearSelection(); // ← add
+  setGridSize([32, 32]);
+  setGridData([]);
+  // ...
+}, [setGridData, setGridSize, reset, clearSelection]);
 ```
 
 - [ ] **Step 5: Save selectionStyle to localStorage**
