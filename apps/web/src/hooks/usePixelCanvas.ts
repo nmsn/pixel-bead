@@ -23,7 +23,14 @@ export function usePixelCanvas() {
   }, []);
 
   const setGridSize = useCallback((size: [number, number]) => {
-    setState((s) => ({ ...s, gridSize: size }));
+    setState((s) => {
+      const [cols, rows] = size;
+      // Extend or trim gridData to match new size, preserving existing cell data
+      const newData: number[][] = Array.from({ length: rows }, (_, row) =>
+        Array.from({ length: cols }, (_, col) => s.gridData[row]?.[col] ?? -1)
+      );
+      return { ...s, gridSize: size, gridData: newData };
+    });
   }, []);
 
   const setTool = useCallback((tool: Tool) => {

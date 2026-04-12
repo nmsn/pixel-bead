@@ -191,9 +191,6 @@ export function App() {
         gridSize={state.gridSize}
         onGridSizeChange={(size) => {
           setGridSize(size);
-          const newGrid = createEmptyGrid(size);
-          setGridData(newGrid);
-          pushIfChanged(newGrid, true);
         }}
         onExport={() => {}}
       />

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { App, Rect, Group, Line } from 'leafer';
+import { Leafer, Rect, Group, Line } from 'leafer-ui';
 import { PALETTE } from '../../lib/palette-256';
 import { Tool } from 'shared/src/types';
 
@@ -19,35 +19,41 @@ interface PixelCanvasProps {
 export function PixelCanvas({
   gridData,
   gridSize,
-  zoom,
+  zoom: _zoom,
   tool,
   panOffset,
   onCellClick,
   onCellDrag,
   onDragStart,
-  onZoomChange,
   onPanChange,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<App | null>(null);
+  const appRef = useRef<Leafer | null>(null);
   const cellsGroupRef = useRef<Group | null>(null);
   const gridGroupRef = useRef<Group | null>(null);
   const cellRectsRef = useRef<Map<string, Rect>>(new Map());
+  const prevGridSizeRef = useRef<[number, number] | null>(null);
   const isDraggingRef = useRef(false);
   const isPanningRef = useRef(false);
   const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
   const panOffsetRef = useRef(panOffset);
+  const onPanChangeRef = useRef(onPanChange);
 
-  // Keep panOffsetRef in sync with panOffset prop
+  // Keep refs in sync with props
   useEffect(() => {
     panOffsetRef.current = panOffset;
   }, [panOffset]);
+
+  useEffect(() => {
+    onPanChangeRef.current = onPanChange;
+  }, [onPanChange]);
 
   // Initialize Leafer app
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const app = new App({
+    const app = new Leafer({
+      view: containerRef.current,
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
     });
@@ -60,19 +66,11 @@ export function PixelCanvas({
     // Create grid group (top layer, pointer-events: none)
     const gridGroup = new Group();
     // Disable hit testing to make grid non-interactive
-    gridGroup.hitRect = null;
+    gridGroup.hitChildren = false;
     app.add(gridGroup);
     gridGroupRef.current = gridGroup;
 
     appRef.current = app;
-
-    // Scroll zoom handler
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      const newZoom = Math.max(0.5, Math.min(8, zoom + delta));
-      onZoomChange?.(newZoom);
-    };
 
     // Middle-click pan handlers
     const handleMouseDown = (e: MouseEvent) => {
@@ -84,11 +82,11 @@ export function PixelCanvas({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isPanningRef.current && lastPanPointRef.current && onPanChange) {
+      if (isPanningRef.current && lastPanPointRef.current && onPanChangeRef.current) {
         const dx = e.clientX - lastPanPointRef.current.x;
         const dy = e.clientY - lastPanPointRef.current.y;
         lastPanPointRef.current = { x: e.clientX, y: e.clientY };
-        onPanChange({ x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy });
+        onPanChangeRef.current({ x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy });
       }
     };
 
@@ -100,7 +98,6 @@ export function PixelCanvas({
     };
 
     const container = containerRef.current;
-    container.addEventListener('wheel', handleWheel, { passive: false });
     container.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -108,15 +105,14 @@ export function PixelCanvas({
     return () => {
       app.destroy();
       appRef.current = null;
-      container.removeEventListener('wheel', handleWheel);
       container.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update cell positions only (no re-render) when zoom changes
+  // Update cell positions only (no re-render) when zoom/panOffset changes
   useEffect(() => {
     const group = cellsGroupRef.current;
     const gridGroup = gridGroupRef.current;
@@ -125,7 +121,7 @@ export function PixelCanvas({
     const [cols, rows] = gridSize;
     const canvasWidth = containerRef.current?.clientWidth ?? 800;
     const canvasHeight = containerRef.current?.clientHeight ?? 600;
-    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * zoom;
+    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
 
     const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
     const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
@@ -147,88 +143,119 @@ export function PixelCanvas({
     for (let i = 0; i <= cols; i++) {
       const line = new Line({
         points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
-        stroke: { color: 'rgba(255,255,255,0.1)', width: 1 },
+        stroke: 'rgba(255,255,255,0.1)',
+        strokeWidth: 1,
       });
       gridGroup.add(line);
     }
     for (let i = 0; i <= rows; i++) {
       const line = new Line({
         points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
-        stroke: { color: 'rgba(255,255,255,0.1)', width: 1 },
+        stroke: 'rgba(255,255,255,0.1)',
+        strokeWidth: 1,
       });
       gridGroup.add(line);
     }
-  // Note: zoom and panOffset are the only deps that should trigger position updates
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, panOffset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_zoom, panOffset]);
 
-  // Render pixel cells only when gridData changes
+  // Rebuild canvas when gridSize changes
   useEffect(() => {
     const group = cellsGroupRef.current;
-    if (!group) return;
+    const gridGroup = gridGroupRef.current;
+    if (!group || !gridGroup) return;
 
-    const [cols, rows] = gridSize;
+    rebuildCanvas(gridData, gridSize, panOffset);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridSize]);
+
+  function rebuildCanvas(data: number[][], size: [number, number], pan: { x: number; y: number }) {
+    const group = cellsGroupRef.current!;
+    const gridGroup = gridGroupRef.current!;
+
+    const [cols, rows] = size;
+
+    // Clear all existing cells and grid lines completely
+    group.clear();
+    gridGroup.clear();
+    cellRectsRef.current.clear();
+    prevGridSizeRef.current = [cols, rows];
+
     const canvasWidth = containerRef.current?.clientWidth ?? 800;
     const canvasHeight = containerRef.current?.clientHeight ?? 600;
-    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * zoom;
+    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
 
-    const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
-    const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
+    const offsetX = (canvasWidth - cellSize * cols) / 2 + pan.x;
+    const offsetY = (canvasHeight - cellSize * rows) / 2 + pan.y;
+
+    // Draw grid lines
+    for (let i = 0; i <= cols; i++) {
+      gridGroup.add(
+        new Line({
+          points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
+          stroke: 'rgba(255,255,255,0.1)',
+          strokeWidth: 1,
+        })
+      );
+    }
+    for (let i = 0; i <= rows; i++) {
+      gridGroup.add(
+        new Line({
+          points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
+          stroke: 'rgba(255,255,255,0.1)',
+          strokeWidth: 1,
+        })
+      );
+    }
 
     // Draw pixel cells
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const key = `${row},${col}`;
-        const colorIndex = gridData[row]?.[col];
-        const fill = colorIndex === -1 || colorIndex === undefined
-          ? undefined
-          : '#' + PALETTE.colors[colorIndex];
+        const colorIndex = data[row]?.[col];
+        const fill =
+          colorIndex === -1 || colorIndex === undefined
+            ? undefined
+            : '#' + PALETTE.colors[colorIndex];
 
-        let rect = cellRectsRef.current.get(key);
-        if (!rect) {
-          rect = new Rect({
-            stroke: { color: 'rgba(0,0,0,0.2)', width: 0.5 },
-            draggable: false,
-          });
-
-          (rect as any).__row = row;
-          (rect as any).__col = col;
-
-          rect.on('pointerdown', () => {
-            isDraggingRef.current = true;
-            onDragStart?.();
-            onCellClick(row, col);
-          });
-
-          rect.on('pointerup', () => {
-            isDraggingRef.current = false;
-          });
-
-          if (onCellDrag) {
-            rect.on('pointermove', () => {
-              if (isDraggingRef.current) {
-                onCellDrag(row, col);
-              }
-            });
-          }
-
-          group.add(rect);
-          cellRectsRef.current.set(key, rect);
-        }
-
-        // Update fill and position
-        rect.set({
+        const rect = new Rect({
+          stroke: 'rgba(0,0,0,0.2)',
+          strokeWidth: 0.5,
+          draggable: false,
           x: offsetX + col * cellSize,
           y: offsetY + row * cellSize,
           width: cellSize,
           height: cellSize,
           fill: fill || undefined,
         });
+
+        (rect as any).__row = row;
+        (rect as any).__col = col;
+
+        rect.on('pointerdown', () => {
+          isDraggingRef.current = true;
+          onDragStart?.();
+          onCellClick(row, col);
+        });
+
+        rect.on('pointerup', () => {
+          isDraggingRef.current = false;
+        });
+
+        if (onCellDrag) {
+          rect.on('pointermove', () => {
+            if (isDraggingRef.current) {
+              onCellDrag(row, col);
+            }
+          });
+        }
+
+        group.add(rect);
+        cellRectsRef.current.set(key, rect);
       }
     }
-  // gridData is the only dependency for cell creation
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridData, gridSize]);
+  }
 
   return (
     <div
