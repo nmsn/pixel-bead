@@ -14,6 +14,10 @@ interface PixelCanvasProps {
   onDragStart?: () => void;
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (panOffset: { x: number; y: number }) => void;
+  selectedCells?: Set<string>;
+  selectionStyle?: 'outline' | 'overlay' | 'inset';
+  onToggleSelection?: (row: number, col: number) => void;
+  onAddToSelection?: (row: number, col: number) => void;
 }
 
 export function PixelCanvas({
@@ -26,10 +30,15 @@ export function PixelCanvas({
   onCellDrag,
   onDragStart,
   onPanChange,
+  selectedCells,
+  selectionStyle,
+  onToggleSelection,
+  onAddToSelection,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Leafer | null>(null);
   const cellsGroupRef = useRef<Group | null>(null);
+  const highlightGroupRef = useRef<Group | null>(null);
   const gridGroupRef = useRef<Group | null>(null);
   const cellRectsRef = useRef<Map<string, Rect>>(new Map());
   const prevGridSizeRef = useRef<[number, number] | null>(null);
@@ -62,6 +71,12 @@ export function PixelCanvas({
     const cellsGroup = new Group();
     app.add(cellsGroup);
     cellsGroupRef.current = cellsGroup;
+
+    // Create highlight group (middle layer)
+    const highlightGroup = new Group();
+    highlightGroup.hitChildren = false;
+    app.add(highlightGroup);
+    highlightGroupRef.current = highlightGroup;
 
     // Create grid group (top layer, pointer-events: none)
     const gridGroup = new Group();
@@ -159,6 +174,46 @@ export function PixelCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_zoom, panOffset]);
 
+  // Rebuild highlight overlay when selectedCells or selectionStyle changes
+  useEffect(() => {
+    const group = highlightGroupRef.current;
+    if (!group) return;
+    group.clear();
+
+    const [cols, rows] = gridSize;
+    const canvasWidth = containerRef.current?.clientWidth ?? 800;
+    const canvasHeight = containerRef.current?.clientHeight ?? 600;
+    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+
+    const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
+    const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
+
+    const style = selectionStyle ?? 'outline';
+    (selectedCells ?? new Set()).forEach((key) => {
+      const [row, col] = key.split(',').map(Number);
+      const rect = new Rect({
+        x: offsetX + col * cellSize,
+        y: offsetY + row * cellSize,
+        width: cellSize,
+        height: cellSize,
+      });
+
+      if (style === 'outline') {
+        rect.stroke = '#a5b4fc';
+        rect.strokeWidth = 2.5;
+        (rect as any).shadow = { type: 'glow', color: 'rgba(165,180,252,0.5)', blur: 6 };
+      } else if (style === 'overlay') {
+        rect.fill = 'rgba(99,102,241,0.5)';
+      } else {
+        rect.stroke = '#ffffff';
+        rect.strokeWidth = 2;
+        (rect as any).strokeAlign = 'inner';
+      }
+
+      group.add(rect);
+    });
+  }, [selectedCells, selectionStyle, gridSize, panOffset]);
+
   // Rebuild canvas when gridSize changes
   useEffect(() => {
     const group = cellsGroupRef.current;
@@ -236,14 +291,24 @@ export function PixelCanvas({
         rect.on('pointerdown', () => {
           isDraggingRef.current = true;
           onDragStart?.();
-          onCellClick(row, col);
+          if (tool === 'select' && onToggleSelection) {
+            onToggleSelection(row, col);
+          } else {
+            onCellClick(row, col);
+          }
         });
 
         rect.on('pointerup', () => {
           isDraggingRef.current = false;
         });
 
-        if (onCellDrag) {
+        if (tool === 'select' && onAddToSelection) {
+          rect.on('pointermove', () => {
+            if (isDraggingRef.current) {
+              onAddToSelection(row, col);
+            }
+          });
+        } else if (onCellDrag) {
           rect.on('pointermove', () => {
             if (isDraggingRef.current) {
               onCellDrag(row, col);
