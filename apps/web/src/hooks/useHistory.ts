@@ -8,18 +8,17 @@ export function useHistory<T>(initial: T) {
   const lastPointerRef = useRef(0);
 
   const push = useCallback((state: T, force = false) => {
-    const serialized = JSON.stringify(state);
-    const currentSerialized = JSON.stringify(history[pointer]);
-    if (!force && serialized === currentSerialized) return;
-
     setHistory((prev) => {
+      const currentSerialized = JSON.stringify(prev[lastPointerRef.current]);
+      const serialized = JSON.stringify(state);
+      if (!force && serialized === currentSerialized) return prev;
+
       const truncated = prev.slice(0, lastPointerRef.current + 1);
       const next = [...truncated, state].slice(-MAX_HISTORY);
       lastPointerRef.current = next.length - 1;
-      setPointer(next.length - 1);
       return next;
     });
-  }, [history, pointer]);
+  }, []);
 
   const undo = useCallback((): T | null => {
     if (pointer <= 0) return null;

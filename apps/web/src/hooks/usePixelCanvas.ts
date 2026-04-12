@@ -48,6 +48,9 @@ export function usePixelCanvas() {
 
   const floodFill = useCallback((row: number, col: number, newColor: number) => {
     setState((s) => {
+      if (row < 0 || row >= s.gridData.length || col < 0 || col >= s.gridData[0]?.length) {
+        return s;
+      }
       const data = s.gridData.map((r) => [...r]);
       const targetColor = data[row][col];
       if (targetColor === newColor) return s;
