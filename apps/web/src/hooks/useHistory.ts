@@ -36,8 +36,14 @@ export function useHistory<T>(initial: T) {
     return history[newPointer];
   }, [pointer, history]);
 
+  const reset = useCallback((state: T) => {
+    setHistory([state]);
+    setPointer(0);
+    lastPointerRef.current = 0;
+  }, []);
+
   const canUndo = pointer > 0;
   const canRedo = pointer < history.length - 1;
 
-  return { push, undo, redo, canUndo, canRedo };
+  return { push, undo, redo, reset, canUndo, canRedo };
 }

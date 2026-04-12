@@ -10,6 +10,7 @@ interface TopToolbarProps {
   gridSize: [number, number];
   onGridSizeChange: (size: [number, number]) => void;
   onExport: () => void;
+  onReset: () => void;
 }
 
 const GRID_SIZES: [number, number][] = [
@@ -33,6 +34,7 @@ export function TopToolbar({
   gridSize,
   onGridSizeChange,
   onExport,
+  onReset,
 }: TopToolbarProps) {
   return (
     <div className="h-12 bg-[#141416] border-b border-[#2a2a2e] flex items-center px-4 gap-2">
@@ -96,6 +98,15 @@ export function TopToolbar({
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Reset */}
+      <button
+        className="h-8 px-3 rounded text-text-secondary text-sm hover:bg-border hover:text-[#f87171] transition-colors"
+        onClick={onReset}
+        title="Reset canvas"
+      >
+        ↺
+      </button>
 
       {/* Export */}
       <button

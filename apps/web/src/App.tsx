@@ -20,9 +20,9 @@ export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill } =
     usePixelCanvas();
 
-  const { push, undo, redo, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
-  const historyRef = useRef({ push, undo, redo, canUndo, canRedo });
-  historyRef.current = { push, undo, redo, canUndo, canRedo };
+  const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
+  const historyRef = useRef({ push, undo, redo, reset, canUndo, canRedo });
+  historyRef.current = { push, undo, redo, reset, canUndo, canRedo };
 
   const [isDragging, setIsDragging] = useState(false);
   const lastPushedRef = useRef<string>('');
@@ -65,6 +65,16 @@ export function App() {
       );
     }
   }, [state.gridData, state.gridSize]);
+
+  // Handle reset
+  const handleReset = useCallback(() => {
+    const emptyGrid = createEmptyGrid([32, 32]);
+    setGridSize([32, 32]);
+    setGridData([]);
+    setPanOffset({ x: 0, y: 0 });
+    reset(emptyGrid);
+    localStorage.removeItem(STORAGE_KEY);
+  }, [setGridData, setGridSize, reset]);
 
   // Handle file upload
   const handleFileDrop = useCallback(
@@ -193,6 +203,7 @@ export function App() {
           setGridSize(size);
         }}
         onExport={() => {}}
+        onReset={handleReset}
       />
 
       <div className="flex flex-1 overflow-hidden">

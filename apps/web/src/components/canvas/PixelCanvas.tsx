@@ -168,7 +168,7 @@ export function PixelCanvas({
     rebuildCanvas(gridData, gridSize, panOffset);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridSize]);
+  }, [gridSize, gridData]);
 
   function rebuildCanvas(data: number[][], size: [number, number], pan: { x: number; y: number }) {
     const group = cellsGroupRef.current!;
