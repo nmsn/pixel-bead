@@ -57,6 +57,11 @@ export function PixelCanvas({
     onPanChangeRef.current = onPanChange;
   }, [onPanChange]);
 
+  const toolRef = useRef(tool);
+  useEffect(() => {
+    toolRef.current = tool;
+  }, [tool]);
+
   // Initialize Leafer app
   useEffect(() => {
     if (!containerRef.current) return;
@@ -201,18 +206,18 @@ export function PixelCanvas({
       if (style === 'outline') {
         rect.stroke = '#a5b4fc';
         rect.strokeWidth = 2.5;
-        (rect as any).shadow = { type: 'glow', color: 'rgba(165,180,252,0.5)', blur: 6 };
+        rect.shadow = { color: 'rgba(165,180,252,0.5)', blur: 6, offsetX: 0, offsetY: 0 };
       } else if (style === 'overlay') {
         rect.fill = 'rgba(99,102,241,0.5)';
       } else {
         rect.stroke = '#ffffff';
         rect.strokeWidth = 2;
-        (rect as any).strokeAlign = 'inner';
+        rect.strokeAlign = 'inside';
       }
 
       group.add(rect);
     });
-  }, [selectedCells, selectionStyle, gridSize, panOffset]);
+  }, [selectedCells, selectionStyle, gridSize, panOffset, _zoom]);
 
   // Rebuild canvas when gridSize changes
   useEffect(() => {
@@ -291,7 +296,7 @@ export function PixelCanvas({
         rect.on('pointerdown', () => {
           isDraggingRef.current = true;
           onDragStart?.();
-          if (tool === 'select' && onToggleSelection) {
+          if (toolRef.current === 'select' && onToggleSelection) {
             onToggleSelection(row, col);
           } else {
             onCellClick(row, col);
@@ -302,7 +307,7 @@ export function PixelCanvas({
           isDraggingRef.current = false;
         });
 
-        if (tool === 'select' && onAddToSelection) {
+        if (toolRef.current === 'select' && onAddToSelection) {
           rect.on('pointermove', () => {
             if (isDraggingRef.current) {
               onAddToSelection(row, col);
