@@ -28,7 +28,7 @@ Key format `"row,col"` (e.g. `"3,14"`).
 |---|---|---|
 | `toggleCellSelection` | `(row: number, col: number) => void` | Toggle a single cell in/out of selection |
 | `addToSelection` | `(row: number, col: number) => void` | Add without toggling (for drag) |
-| `selectAllByColor` | `(colorIndex: number) => void` | Select all cells with matching color |
+| `selectAllByColor` | `(colorIndex: number) => void` | Clears existing selection first, then selects all cells with matching color |
 | `clearSelection` | `() => void` | Clear all selected cells |
 | `applyColorToSelection` | `(colorIndex: number) => void` | Apply color to all selected, then clear |
 
@@ -54,7 +54,7 @@ Key format `"row,col"` (e.g. `"3,14"`).
 | Action | Result |
 |---|---|
 | Click cell | Toggle cell selection |
-| Drag on cells | Add cells to selection (no toggle) |
+| Drag on cells | Add cells to selection (no toggle) — selection persists after mouse release |
 | Click already-selected cell | Remove from selection |
 | Click empty/transparent cell | Toggle its selection (transparent is `-1` color) |
 
@@ -110,7 +110,7 @@ Shown only when `selectedCells.size > 0`.
 ```
 
 - **改色**: Opens inline color picker (reuse `ColorPalette` in single-select mode). Clicking a color triggers `applyColorToSelection(colorIndex)`.
-- **全选同色**: Reads the color of the first cell in `selectedCells` from `gridData`, calls `selectAllByColor(colorIndex)`.
+- **全选同色**: Reads the color of the first cell in `selectedCells` from `gridData`, calls `selectAllByColor(colorIndex)` — this **replaces** the current selection with all matching-color cells.
 - **清除选区**: Calls `clearSelection()`.
 - **[A] [B] [C]**: Three style buttons — clicking sets `selectionStyle` and saves to localStorage.
 
