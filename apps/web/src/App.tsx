@@ -21,7 +21,7 @@ function createEmptyGrid(size: [number, number]): number[][] {
 export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
   toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle,
-  backgroundColor, cornerRadius, iconScale, setBackgroundColor, setCornerRadius, setIconScale } =
+  backgroundColor, cornerRadius, iconScale, themeColor, setBackgroundColor, setCornerRadius, setIconScale, setThemeColor } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -258,6 +258,8 @@ export function App() {
         }}
         onExport={() => {}}
         onReset={handleReset}
+        themeColor={themeColor}
+        onThemeColorChange={setThemeColor}
       />
 
       <div className="flex flex-1 overflow-hidden">
