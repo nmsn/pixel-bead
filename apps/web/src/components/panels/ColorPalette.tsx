@@ -10,7 +10,7 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-t border-[var(--color-border)]">
+    <div className="border-t border-[var(--color-border)] bg-surface">
       {/* Toggle */}
       <button
         className="w-full h-10 flex items-center justify-between px-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface)] transition-colors"
