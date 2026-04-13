@@ -5,7 +5,7 @@ export interface ProjectData {
   lastModified: number;
 }
 
-export type Tool = 'select' | 'pen' | 'bucket' | 'eraser';
+export type Tool = 'select' | 'pen' | 'bucket' | 'eraser' | 'eyedropper';
 
 export interface ExportFormat {
   type: 'png' | 'ico' | 'icns';

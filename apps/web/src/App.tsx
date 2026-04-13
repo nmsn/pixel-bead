@@ -126,6 +126,9 @@ export function App() {
         case 'bucket':
           floodFill(row, col, currentColorIndex);
           return;
+        case 'eyedropper':
+          setCurrentColorIndex(gridData[row][col]);
+          return;
       }
 
       if (changed) {
@@ -175,7 +178,7 @@ export function App() {
         return;
       }
 
-      const keyMap: Record<string, Tool> = { v: 'select', b: 'pen', g: 'bucket', e: 'eraser' };
+      const keyMap: Record<string, Tool> = { v: 'select', b: 'pen', g: 'bucket', e: 'eraser', i: 'eyedropper' };
       if (keyMap[e.key.toLowerCase()]) {
         setTool(keyMap[e.key.toLowerCase()]);
       }

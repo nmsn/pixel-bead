@@ -22,6 +22,7 @@ const TOOLS: { id: Tool; label: string; icon: string; key: string }[] = [
   { id: 'pen', label: 'Pen', icon: '✏', key: 'B' },
   { id: 'bucket', label: 'Fill', icon: '🪣', key: 'G' },
   { id: 'eraser', label: 'Eraser', icon: '🧽', key: 'E' },
+  { id: 'eyedropper', label: 'Eyedropper', icon: '🎯', key: 'I' },
 ];
 
 export function TopToolbar({
