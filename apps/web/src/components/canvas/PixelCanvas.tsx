@@ -65,10 +65,12 @@ export function PixelCanvas({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const CANVAS_SIZE = 800;
+
     const app = new Leafer({
       view: containerRef.current,
-      width: containerRef.current.clientWidth,
-      height: containerRef.current.clientHeight,
+      width: CANVAS_SIZE,
+      height: CANVAS_SIZE,
     });
 
     // Create cells group (bottom layer)
@@ -144,15 +146,14 @@ export function PixelCanvas({
     const labelsGroup = labelsGroupRef.current;
     if (!group || !gridGroup || !labelsGroup) return;
 
+    const CANVAS_SIZE = 800;
     const [cols, rows] = gridSize;
-    const canvasWidth = containerRef.current?.clientWidth ?? 800;
-    const canvasHeight = containerRef.current?.clientHeight ?? 600;
-    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+    const cellSize = CANVAS_SIZE / Math.max(cols, rows);
     const labelWidth = 24;
     const labelHeight = 16;
 
-    const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
-    const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
+    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
+    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
 
     // Update existing cell rects
     cellRectsRef.current.forEach((rect, key) => {
@@ -228,13 +229,12 @@ export function PixelCanvas({
     if (!group) return;
     group.clear();
 
+    const CANVAS_SIZE = 800;
     const [cols, rows] = gridSize;
-    const canvasWidth = containerRef.current?.clientWidth ?? 800;
-    const canvasHeight = containerRef.current?.clientHeight ?? 600;
-    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+    const cellSize = CANVAS_SIZE / Math.max(cols, rows);
 
-    const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
-    const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
+    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
+    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
 
     const style = selectionStyle ?? 'outline';
     (selectedCells ?? new Set()).forEach((key) => {
@@ -278,6 +278,7 @@ export function PixelCanvas({
     const gridGroup = gridGroupRef.current!;
     const labelsGroup = labelsGroupRef.current!;
 
+    const CANVAS_SIZE = 800;
     const [cols, rows] = size;
 
     // Clear all existing cells and grid lines completely
@@ -287,14 +288,12 @@ export function PixelCanvas({
     cellRectsRef.current.clear();
     prevGridSizeRef.current = [cols, rows];
 
-    const canvasWidth = containerRef.current?.clientWidth ?? 800;
-    const canvasHeight = containerRef.current?.clientHeight ?? 600;
-    const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+    const cellSize = CANVAS_SIZE / Math.max(cols, rows);
     const labelWidth = 24;
     const labelHeight = 16;
 
-    const offsetX = (canvasWidth - cellSize * cols) / 2 + pan.x;
-    const offsetY = (canvasHeight - cellSize * rows) / 2 + pan.y;
+    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + pan.x;
+    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + pan.y;
 
     // Draw grid lines
     for (let i = 0; i <= cols; i++) {
@@ -399,7 +398,7 @@ export function PixelCanvas({
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
+      style={{ width: 800, height: 800, cursor: 'crosshair' }}
     />
   );
 }
