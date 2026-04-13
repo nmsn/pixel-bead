@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PALETTE } from '../../lib/palette-256';
 
 interface FramePanelProps {
@@ -80,13 +80,22 @@ export function FramePanel({
     }
   }, [backgroundColor, cornerRadius, iconScale, gridSize, gridData]);
 
+  const [isExpanded, setIsExpanded] = useState(true);
+
   return (
     <div className="w-[280px] bg-surface border-l border-border flex flex-col">
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-sm font-medium text-text-primary">背景设置</h2>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-text-secondary hover:text-text-primary transition-colors"
+        >
+          {isExpanded ? '▼' : '▶'}
+        </button>
       </div>
 
-      <div className="p-4 space-y-4">
+      {isExpanded && (
+        <div className="p-4 space-y-4">
         {/* Preview */}
         <div className="flex justify-center">
           <canvas
@@ -137,7 +146,8 @@ export function FramePanel({
           />
           <span className="text-xs text-text-primary font-mono w-12 text-right">{Math.round(iconScale * 100)}%</span>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
