@@ -35,7 +35,7 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
           >
             {PALETTE.colors.map((color, index) => (
               <button
-                key={color}
+                key={index}
                 className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
                   index === currentColorIndex
                     ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[#141416]'
