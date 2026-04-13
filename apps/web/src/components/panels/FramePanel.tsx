@@ -81,9 +81,9 @@ export function FramePanel({
   }, [backgroundColor, cornerRadius, iconScale, gridSize, gridData]);
 
   return (
-    <div className="w-[280px] bg-[#141416] border-l border-[#2a2a2e] flex flex-col">
-      <div className="p-4 border-b border-[#2a2a2e]">
-        <h2 className="text-sm font-medium text-[#e4e4e7]">背景设置</h2>
+    <div className="w-[280px] bg-surface border-l border-border flex flex-col">
+      <div className="p-4 border-b border-border">
+        <h2 className="text-sm font-medium text-text-primary">背景设置</h2>
       </div>
 
       <div className="p-4 space-y-4">
@@ -93,25 +93,25 @@ export function FramePanel({
             ref={previewRef}
             width={128}
             height={128}
-            className="border border-[#2a2a2e] rounded"
+            className="border border-border rounded"
           />
         </div>
 
         {/* Background Color */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#71717a]">背景色:</span>
+          <span className="text-xs text-text-secondary">背景色:</span>
           <input
             type="color"
             value={backgroundColor}
             onChange={(e) => onBackgroundColorChange(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border border-[#2a2a2e]"
+            className="w-8 h-8 rounded cursor-pointer border border-border"
           />
-          <span className="text-xs text-[#e4e4e7] font-mono">{backgroundColor}</span>
+          <span className="text-xs text-text-primary font-mono">{backgroundColor}</span>
         </div>
 
         {/* Corner Radius */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#71717a]">圆角:</span>
+          <span className="text-xs text-text-secondary">圆角:</span>
           <input
             type="range"
             min="0"
@@ -120,12 +120,12 @@ export function FramePanel({
             onChange={(e) => onCornerRadiusChange(Number(e.target.value))}
             className="flex-1"
           />
-          <span className="text-xs text-[#e4e4e7] font-mono w-12 text-right">{cornerRadius}px</span>
+          <span className="text-xs text-text-primary font-mono w-12 text-right">{cornerRadius}px</span>
         </div>
 
         {/* Icon Scale */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#71717a]">图标大小:</span>
+          <span className="text-xs text-text-secondary">图标大小:</span>
           <input
             type="range"
             min="0.1"
@@ -135,7 +135,7 @@ export function FramePanel({
             onChange={(e) => onIconScaleChange(Number(e.target.value))}
             className="flex-1"
           />
-          <span className="text-xs text-[#e4e4e7] font-mono w-12 text-right">{Math.round(iconScale * 100)}%</span>
+          <span className="text-xs text-text-primary font-mono w-12 text-right">{Math.round(iconScale * 100)}%</span>
         </div>
       </div>
     </div>
