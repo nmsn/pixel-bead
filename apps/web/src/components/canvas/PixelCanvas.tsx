@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Leafer, Rect, Group, Line } from 'leafer-ui';
+import { Leafer, Rect, Group, Line, PointerEvent } from 'leafer-ui';
 import { PALETTE } from '../../lib/palette-256';
 import { Tool } from 'shared/src/types';
 
@@ -293,7 +293,7 @@ export function PixelCanvas({
         (rect as any).__row = row;
         (rect as any).__col = col;
 
-        rect.on('pointerdown', () => {
+        rect.on(PointerEvent.DOWN, () => {
           isDraggingRef.current = true;
           onDragStart?.();
           if (toolRef.current === 'select' && onToggleSelection) {
@@ -303,18 +303,18 @@ export function PixelCanvas({
           }
         });
 
-        rect.on('pointerup', () => {
+        rect.on(PointerEvent.UP, () => {
           isDraggingRef.current = false;
         });
 
         if (toolRef.current === 'select' && onAddToSelection) {
-          rect.on('pointermove', () => {
+          rect.on(PointerEvent.MOVE, () => {
             if (isDraggingRef.current) {
               onAddToSelection(row, col);
             }
           });
         } else if (onCellDrag) {
-          rect.on('pointermove', () => {
+          rect.on(PointerEvent.MOVE, () => {
             if (isDraggingRef.current) {
               onCellDrag(row, col);
             }
