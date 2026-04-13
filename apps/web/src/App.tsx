@@ -244,7 +244,7 @@ export function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas area */}
         <div
-          className="flex-1 relative"
+          className="flex-1 flex items-start justify-center pt-8"
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragOver(true);
