@@ -40,6 +40,8 @@ export function PixelCanvas({
   const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
   const panOffsetRef = useRef(panOffset);
   const onPanChangeRef = useRef(onPanChange);
+  const onCellClickRef = useRef(onCellClick);
+  const onCellDragRef = useRef(onCellDrag);
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -49,6 +51,14 @@ export function PixelCanvas({
   useEffect(() => {
     onPanChangeRef.current = onPanChange;
   }, [onPanChange]);
+
+  useEffect(() => {
+    onCellClickRef.current = onCellClick;
+  }, [onCellClick]);
+
+  useEffect(() => {
+    onCellDragRef.current = onCellDrag;
+  }, [onCellDrag]);
 
   // Initialize Leafer app
   useEffect(() => {
@@ -284,17 +294,17 @@ export function PixelCanvas({
         rect.on(PointerEvent.DOWN, () => {
           isDraggingRef.current = true;
           onDragStart?.();
-          onCellClick(row, col);
+          onCellClickRef.current(row, col);
         });
 
         rect.on(PointerEvent.UP, () => {
           isDraggingRef.current = false;
         });
 
-        if (onCellDrag) {
+        if (onCellDragRef.current) {
           rect.on(PointerEvent.MOVE, () => {
             if (isDraggingRef.current) {
-              onCellDrag(row, col);
+              onCellDragRef.current?.(row, col);
             }
           });
         }
