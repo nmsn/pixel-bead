@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 
-const MAX_HISTORY = 50;
+const MAX_HISTORY = 20;
 
 export function useHistory<T>(initial: T) {
   const [history, setHistory] = useState<T[]>([initial]);
