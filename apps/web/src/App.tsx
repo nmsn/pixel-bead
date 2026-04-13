@@ -153,13 +153,15 @@ export function App() {
         const newData = gridData.map((r) => [...r]);
         newData[row][col] = currentColorIndex;
         setGridData(newData);
+        pushIfChanged(newData);
       } else if (tool === 'eraser') {
         const newData = gridData.map((r) => [...r]);
         newData[row][col] = -1;
         setGridData(newData);
+        pushIfChanged(newData);
       }
     },
-    [state, setGridData, addToSelection]
+    [state, setGridData, addToSelection, pushIfChanged]
   );
 
   // Keyboard shortcuts
