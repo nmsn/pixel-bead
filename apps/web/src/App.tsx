@@ -4,6 +4,7 @@ import { TopToolbar } from './components/toolbar/TopToolbar';
 import { ExportPanel } from './components/panels/ExportPanel';
 import { ColorPalette } from './components/panels/ColorPalette';
 import { SelectionPanel } from './components/panels/SelectionPanel';
+import { FramePanel } from './components/panels/FramePanel';
 import { usePixelCanvas } from './hooks/usePixelCanvas';
 import { useHistory } from './hooks/useHistory';
 import { imageFileToImageData, pixelateImage } from './lib/pixelate';
@@ -19,7 +20,8 @@ function createEmptyGrid(size: [number, number]): number[][] {
 
 export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
-  toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle } =
+  toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle,
+  backgroundColor, cornerRadius, setBackgroundColor, setCornerRadius } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -336,6 +338,14 @@ export function App() {
               onClearSelection={clearSelection}
             />
           )}
+          <FramePanel
+            backgroundColor={backgroundColor}
+            cornerRadius={cornerRadius}
+            gridSize={state.gridSize}
+            gridData={state.gridData}
+            onBackgroundColorChange={setBackgroundColor}
+            onCornerRadiusChange={setCornerRadius}
+          />
           <ExportPanel
             gridData={state.gridData}
             gridSize={state.gridSize}
