@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Leafer, Rect, Group, Line, PointerEvent } from 'leafer-ui';
+import { Leafer, Rect, Group, Line, Text, PointerEvent } from 'leafer-ui';
 import { PALETTE } from '../../lib/palette-256';
 
 interface PixelCanvasProps {
@@ -33,6 +33,7 @@ export function PixelCanvas({
   const cellsGroupRef = useRef<Group | null>(null);
   const highlightGroupRef = useRef<Group | null>(null);
   const gridGroupRef = useRef<Group | null>(null);
+  const labelsGroupRef = useRef<Group | null>(null);
   const cellRectsRef = useRef<Map<string, Rect>>(new Map());
   const prevGridSizeRef = useRef<[number, number] | null>(null);
   const isDraggingRef = useRef(false);
@@ -88,6 +89,12 @@ export function PixelCanvas({
     app.add(gridGroup);
     gridGroupRef.current = gridGroup;
 
+    // Create labels group for row/column numbers
+    const labelsGroup = new Group();
+    labelsGroup.hitChildren = false;
+    app.add(labelsGroup);
+    labelsGroupRef.current = labelsGroup;
+
     appRef.current = app;
 
     // Middle-click pan handlers
@@ -134,12 +141,15 @@ export function PixelCanvas({
   useEffect(() => {
     const group = cellsGroupRef.current;
     const gridGroup = gridGroupRef.current;
-    if (!group || !gridGroup) return;
+    const labelsGroup = labelsGroupRef.current;
+    if (!group || !gridGroup || !labelsGroup) return;
 
     const [cols, rows] = gridSize;
     const canvasWidth = containerRef.current?.clientWidth ?? 800;
     const canvasHeight = containerRef.current?.clientHeight ?? 600;
     const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+    const labelWidth = 24;
+    const labelHeight = 16;
 
     const offsetX = (canvasWidth - cellSize * cols) / 2 + panOffset.x;
     const offsetY = (canvasHeight - cellSize * rows) / 2 + panOffset.y;
@@ -173,6 +183,41 @@ export function PixelCanvas({
         strokeWidth: 1,
       });
       gridGroup.add(line);
+    }
+
+    // Update labels
+    labelsGroup.children.forEach((child) => child.remove());
+
+    // Column numbers (top)
+    for (let col = 0; col < cols; col++) {
+      const text = new Text({
+        text: String(col),
+        x: offsetX + col * cellSize + cellSize / 2,
+        y: offsetY - labelHeight,
+        width: cellSize,
+        height: labelHeight,
+        align: 'center',
+        verticalAlign: 'middle',
+        fontSize: 10,
+        fill: 'rgba(255,255,255,0.5)',
+      });
+      labelsGroup.add(text);
+    }
+
+    // Row numbers (left)
+    for (let row = 0; row < rows; row++) {
+      const text = new Text({
+        text: String(row),
+        x: offsetX - labelWidth,
+        y: offsetY + row * cellSize + cellSize / 2,
+        width: labelWidth,
+        height: cellSize,
+        align: 'center',
+        verticalAlign: 'middle',
+        fontSize: 10,
+        fill: 'rgba(255,255,255,0.5)',
+      });
+      labelsGroup.add(text);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_zoom, panOffset]);
@@ -231,18 +276,22 @@ export function PixelCanvas({
   function rebuildCanvas(data: number[][], size: [number, number], pan: { x: number; y: number }) {
     const group = cellsGroupRef.current!;
     const gridGroup = gridGroupRef.current!;
+    const labelsGroup = labelsGroupRef.current!;
 
     const [cols, rows] = size;
 
     // Clear all existing cells and grid lines completely
     group.clear();
     gridGroup.clear();
+    labelsGroup.clear();
     cellRectsRef.current.clear();
     prevGridSizeRef.current = [cols, rows];
 
     const canvasWidth = containerRef.current?.clientWidth ?? 800;
     const canvasHeight = containerRef.current?.clientHeight ?? 600;
     const cellSize = Math.min(canvasWidth / cols, canvasHeight / rows) * 1;
+    const labelWidth = 24;
+    const labelHeight = 16;
 
     const offsetX = (canvasWidth - cellSize * cols) / 2 + pan.x;
     const offsetY = (canvasHeight - cellSize * rows) / 2 + pan.y;
@@ -265,6 +314,38 @@ export function PixelCanvas({
           strokeWidth: 1,
         })
       );
+    }
+
+    // Draw column numbers (top)
+    for (let col = 0; col < cols; col++) {
+      const text = new Text({
+        text: String(col),
+        x: offsetX + col * cellSize + cellSize / 2,
+        y: offsetY - labelHeight,
+        width: cellSize,
+        height: labelHeight,
+        align: 'center',
+        verticalAlign: 'middle',
+        fontSize: 10,
+        fill: 'rgba(255,255,255,0.5)',
+      });
+      labelsGroup.add(text);
+    }
+
+    // Draw row numbers (left)
+    for (let row = 0; row < rows; row++) {
+      const text = new Text({
+        text: String(row),
+        x: offsetX - labelWidth,
+        y: offsetY + row * cellSize + cellSize / 2,
+        width: labelWidth,
+        height: cellSize,
+        align: 'center',
+        verticalAlign: 'middle',
+        fontSize: 10,
+        fill: 'rgba(255,255,255,0.5)',
+      });
+      labelsGroup.add(text);
     }
 
     // Draw pixel cells
