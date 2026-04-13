@@ -10,25 +10,25 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-t border-[#2a2a2e]">
+    <div className="border-t border-[var(--color-border)]">
       {/* Toggle */}
       <button
-        className="w-full h-10 flex items-center justify-between px-4 bg-[#141416] hover:bg-[#1c1c1e] transition-colors"
+        className="w-full h-10 flex items-center justify-between px-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface)] transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="text-sm text-[#71717a]">Palette</span>
+        <span className="text-sm text-[var(--color-text-secondary)]">Palette</span>
         <div className="flex items-center gap-2">
           <div
-            className="w-5 h-5 rounded border border-[#2a2a2e]"
+            className="w-5 h-5 rounded border border-[var(--color-border)]"
             style={{ backgroundColor: '#' + PALETTE.colors[currentColorIndex] }}
           />
-          <span className="text-xs text-[#71717a]">{isOpen ? '▲' : '▼'}</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">{isOpen ? '▲' : '▼'}</span>
         </div>
       </button>
 
       {/* Palette grid */}
       {isOpen && (
-        <div className="p-2 bg-[#141416]">
+        <div className="p-2 bg-[var(--color-surface)]">
           <div
             className="grid gap-px"
             style={{ gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}
@@ -38,7 +38,7 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
                 key={index}
                 className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
                   index === currentColorIndex
-                    ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[#141416]'
+                    ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
                     : ''
                 }`}
                 style={{ backgroundColor: '#' + color }}
