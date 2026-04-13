@@ -21,7 +21,7 @@ function createEmptyGrid(size: [number, number]): number[][] {
 export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
   toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle,
-  backgroundColor, cornerRadius, iconScale, themeColor, setBackgroundColor, setCornerRadius, setIconScale, setThemeColor } =
+  backgroundColor, cornerRadius, iconScale, isDark, setBackgroundColor, setCornerRadius, setIconScale, setIsDark } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -84,6 +84,14 @@ export function App() {
     reset(emptyGrid);
     localStorage.removeItem(STORAGE_KEY);
   }, [setGridData, setGridSize, reset, clearSelection]);
+
+  // Theme initialization
+  useEffect(() => {
+    const saved = localStorage.getItem('pixel-bead-is-dark');
+    const isDark = saved !== null ? JSON.parse(saved) : true;
+    setIsDark(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
 
   // Handle file upload
   const handleFileDrop = useCallback(
@@ -258,8 +266,13 @@ export function App() {
         }}
         onExport={() => {}}
         onReset={handleReset}
-        themeColor={themeColor}
-        onThemeColorChange={setThemeColor}
+        isDark={isDark}
+        onThemeToggle={() => {
+          const newIsDark = !isDark;
+          setIsDark(newIsDark);
+          localStorage.setItem('pixel-bead-is-dark', JSON.stringify(newIsDark));
+          document.documentElement.classList.toggle('dark', newIsDark);
+        }}
       />
 
       <div className="flex flex-1 overflow-hidden">
