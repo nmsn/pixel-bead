@@ -93,14 +93,6 @@ export function App() {
     localStorage.removeItem(STORAGE_KEY);
   }, [setGridData, setGridSize, reset, clearSelection]);
 
-  // Theme initialization
-  useEffect(() => {
-    const saved = localStorage.getItem('pixel-bead-is-dark');
-    const isDark = saved !== null ? JSON.parse(saved) : true;
-    setIsDark(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
-  }, []);
-
   // Handle file upload
   const handleFileDrop = useCallback(
     async (file: File) => {
@@ -286,7 +278,7 @@ export function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas area */}
         <div
-          className="flex-1 flex items-start justify-center pt-8"
+          className="flex-1 flex items-start justify-center pt-8 bg-canvas-bg"
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragOver(true);
@@ -341,6 +333,7 @@ export function App() {
             onZoomChange={setZoom}
             selectedCells={state.selectedCells}
             selectionStyle={state.selectionStyle}
+            isDark={isDark}
           />
 
           {/* Hidden file input */}
