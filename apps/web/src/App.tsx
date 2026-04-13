@@ -201,16 +201,25 @@ export function App() {
 
   // Export handlers
   const handleExportPng = useCallback(
-    (size: number) => exportToPng(state.gridData, state.gridSize, size),
-    [state.gridData, state.gridSize]
+    (size: number) => exportToPng(state.gridData, state.gridSize, size, {
+      backgroundColor,
+      cornerRadius,
+    }),
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
   );
   const handleExportIco = useCallback(
-    () => exportToIco(state.gridData, state.gridSize),
-    [state.gridData, state.gridSize]
+    () => exportToIco(state.gridData, state.gridSize, {
+      backgroundColor,
+      cornerRadius,
+    }),
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
   );
   const handleExportIcns = useCallback(
-    () => exportToIcns(state.gridData, state.gridSize),
-    [state.gridData, state.gridSize]
+    () => exportToIcns(state.gridData, state.gridSize, {
+      backgroundColor,
+      cornerRadius,
+    }),
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
   );
 
   // Upload zone overlay

@@ -1,8 +1,20 @@
 import { PALETTE } from '../palette-256';
 
+export interface FrameOptions {
+  backgroundColor?: string;
+  cornerRadius?: number;
+}
+
 // renderToCanvas is exported so toIcns.ts can reuse it
-export function renderToCanvas(gridData: number[][], gridSize: [number, number], outputSize: number): string {
+export function renderToCanvas(
+  gridData: number[][],
+  gridSize: [number, number],
+  outputSize: number,
+  options: FrameOptions = {}
+): string {
   const [cols, rows] = gridSize;
+  const { backgroundColor = '#ffffff', cornerRadius = 0 } = options;
+
   if (cols <= 0 || rows <= 0 || outputSize <= 0) {
     // Return empty canvas
     const canvas = document.createElement('canvas');
@@ -16,17 +28,29 @@ export function renderToCanvas(gridData: number[][], gridSize: [number, number],
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas.toDataURL('image/png');
 
-  const cellW = outputSize / cols;
-  const cellH = outputSize / rows;
+  // Draw rounded background
+  ctx.fillStyle = backgroundColor;
+  if (cornerRadius > 0) {
+    ctx.beginPath();
+    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.fill();
+  } else {
+    ctx.fillRect(0, 0, outputSize, outputSize);
+  }
+
+  // Calculate cell size to fit grid centered
+  const cellSize = outputSize / Math.max(cols, rows);
+  const offsetX = (outputSize - cols * cellSize) / 2;
+  const offsetY = (outputSize - rows * cellSize) / 2;
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const colorIndex = gridData[row]?.[col];
       if (colorIndex === -1 || colorIndex === undefined) {
-        ctx.clearRect(col * cellW, row * cellH, cellW, cellH);
+        // Skip transparent pixels (show background)
       } else {
         ctx.fillStyle = '#' + PALETTE.colors[colorIndex];
-        ctx.fillRect(col * cellW, row * cellH, cellW, cellH);
+        ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
       }
     }
   }
@@ -34,15 +58,24 @@ export function renderToCanvas(gridData: number[][], gridSize: [number, number],
   return canvas.toDataURL('image/png');
 }
 
-export function exportToPng(gridData: number[][], gridSize: [number, number], outputSize: number): void {
-  const dataUrl = renderToCanvas(gridData, gridSize, outputSize);
+export function exportToPng(
+  gridData: number[][],
+  gridSize: [number, number],
+  outputSize: number,
+  options: FrameOptions = {}
+): void {
+  const dataUrl = renderToCanvas(gridData, gridSize, outputSize, options);
   const link = document.createElement('a');
   link.download = `pixel-icon-${outputSize}x${outputSize}.png`;
   link.href = dataUrl;
   link.click();
 }
 
-export async function exportToIco(gridData: number[][], gridSize: [number, number]): Promise<void> {
+export async function exportToIco(
+  gridData: number[][],
+  gridSize: [number, number],
+  options: FrameOptions = {}
+): Promise<void> {
   const sizes = [16, 32, 48, 256];
 
   function dataUrlToBuffer(dataUrl: string): ArrayBuffer {
@@ -54,7 +87,7 @@ export async function exportToIco(gridData: number[][], gridSize: [number, numbe
     return buf.buffer;
   }
 
-  const dataUrls = sizes.map((size) => renderToCanvas(gridData, gridSize, size));
+  const dataUrls = sizes.map((size) => renderToCanvas(gridData, gridSize, size, options));
   const pngBuffers = dataUrls.map(dataUrlToBuffer);
   const pngSizes = pngBuffers.map((b) => b.byteLength);
 
