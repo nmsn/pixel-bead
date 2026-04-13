@@ -14,6 +14,7 @@ interface PixelCanvasProps {
   onPanChange?: (panOffset: { x: number; y: number }) => void;
   selectedCells?: Set<string>;
   selectionStyle?: 'outline' | 'overlay' | 'inset';
+  isDark: boolean;
 }
 
 export function PixelCanvas({
@@ -27,6 +28,7 @@ export function PixelCanvas({
   onPanChange,
   selectedCells,
   selectionStyle,
+  isDark,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Leafer | null>(null);
@@ -43,8 +45,13 @@ export function PixelCanvas({
   const onPanChangeRef = useRef(onPanChange);
   const onCellClickRef = useRef(onCellClick);
   const onCellDragRef = useRef(onCellDrag);
+  const isDarkRef = useRef(isDark);
 
   // Keep refs in sync with props
+  useEffect(() => {
+    isDarkRef.current = isDark;
+  }, [isDark]);
+
   useEffect(() => {
     panOffsetRef.current = panOffset;
   }, [panOffset]);
@@ -71,6 +78,7 @@ export function PixelCanvas({
       view: containerRef.current,
       width: CANVAS_SIZE,
       height: CANVAS_SIZE,
+      fill: isDarkRef.current ? '#18181b' : '#f4f4f5',
     });
 
     // Create cells group (bottom layer)
@@ -139,6 +147,12 @@ export function PixelCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update Leafer background when isDark changes
+  useEffect(() => {
+    if (!appRef.current) return;
+    appRef.current.fill = isDark ? '#18181b' : '#f4f4f5';
+  }, [isDark]);
+
   // Update cell positions only (no re-render) when zoom/panOffset changes
   useEffect(() => {
     const group = cellsGroupRef.current;
@@ -172,7 +186,7 @@ export function PixelCanvas({
     for (let i = 0; i <= cols; i++) {
       const line = new Line({
         points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
-        stroke: 'rgba(255,255,255,0.1)',
+        stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
         strokeWidth: 1,
       });
       gridGroup.add(line);
@@ -180,7 +194,7 @@ export function PixelCanvas({
     for (let i = 0; i <= rows; i++) {
       const line = new Line({
         points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
-        stroke: 'rgba(255,255,255,0.1)',
+        stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
         strokeWidth: 1,
       });
       gridGroup.add(line);
@@ -200,7 +214,7 @@ export function PixelCanvas({
         align: 'center',
         verticalAlign: 'middle',
         fontSize: 10,
-        fill: 'rgba(255,255,255,0.5)',
+        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
       labelsGroup.add(text);
     }
@@ -216,7 +230,7 @@ export function PixelCanvas({
         align: 'center',
         verticalAlign: 'middle',
         fontSize: 10,
-        fill: 'rgba(255,255,255,0.5)',
+        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
       labelsGroup.add(text);
     }
@@ -300,7 +314,7 @@ export function PixelCanvas({
       gridGroup.add(
         new Line({
           points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
-          stroke: 'rgba(255,255,255,0.1)',
+          stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
           strokeWidth: 1,
         })
       );
@@ -309,7 +323,7 @@ export function PixelCanvas({
       gridGroup.add(
         new Line({
           points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
-          stroke: 'rgba(255,255,255,0.1)',
+          stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
           strokeWidth: 1,
         })
       );
@@ -326,7 +340,7 @@ export function PixelCanvas({
         align: 'center',
         verticalAlign: 'middle',
         fontSize: 10,
-        fill: 'rgba(255,255,255,0.5)',
+        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
       labelsGroup.add(text);
     }
@@ -342,7 +356,7 @@ export function PixelCanvas({
         align: 'center',
         verticalAlign: 'middle',
         fontSize: 10,
-        fill: 'rgba(255,255,255,0.5)',
+        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
       labelsGroup.add(text);
     }
