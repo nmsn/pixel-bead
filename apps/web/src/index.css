@@ -1,11 +1,26 @@
 @import "tailwindcss";
 
 @theme {
+  /* 浅色模式（默认） */
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-border: #e4e4e7;
+  --color-text-primary: #18181b;
+  --color-text-secondary: #71717a;
+  --color-accent: #6366f1;
+  --color-canvas-bg: #f4f4f5;
+  --color-hover: #e5e5e5;
+  --color-hover-border: #d4d4d8;
+}
+
+.dark {
+  /* 深色模式覆盖 */
   --color-bg: #0a0a0b;
   --color-surface: #141416;
   --color-border: #2a2a2e;
   --color-text-primary: #e4e4e7;
   --color-text-secondary: #71717a;
-  --color-accent: #6366f1;
   --color-canvas-bg: #18181b;
+  --color-hover: #3a3a3e;
+  --color-hover-border: #3f3f5a;
 }
