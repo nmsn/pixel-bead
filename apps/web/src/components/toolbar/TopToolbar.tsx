@@ -11,8 +11,8 @@ interface TopToolbarProps {
   onGridSizeChange: (size: [number, number]) => void;
   onExport: () => void;
   onReset: () => void;
-  themeColor: string;
-  onThemeColorChange: (color: string) => void;
+  isDark: boolean;
+  onThemeToggle: () => void;
 }
 
 const GRID_SIZES: [number, number][] = [
@@ -27,15 +27,6 @@ const TOOLS: { id: Tool; label: string; icon: string; key: string }[] = [
   { id: 'eyedropper', label: 'Eyedropper', icon: '🎯', key: 'I' },
 ];
 
-const THEME_COLORS = [
-  { name: 'Indigo', value: '#6366f1' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Green', value: '#22c55e' },
-  { name: 'Orange', value: '#f97316' },
-  { name: 'Pink', value: '#ec4899' },
-  { name: 'Purple', value: '#a855f7' },
-];
-
 export function TopToolbar({
   canUndo,
   canRedo,
@@ -47,15 +38,15 @@ export function TopToolbar({
   onGridSizeChange,
   onExport,
   onReset,
-  themeColor,
-  onThemeColorChange,
+  isDark,
+  onThemeToggle,
 }: TopToolbarProps) {
   return (
-    <div className="h-12 bg-[#141416] border-b border-[#2a2a2e] flex items-center px-4 gap-2">
+    <div className="h-12 bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-4 gap-2">
       {/* Undo/Redo */}
       <div className="flex items-center gap-1 mr-4">
         <button
-          className="w-8 h-8 flex items-center justify-center rounded text-[#e4e4e7] hover:bg-[#2a2a2e] disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
           onClick={onUndo}
           disabled={!canUndo}
           title="Undo (Ctrl+Z)"
@@ -63,7 +54,7 @@ export function TopToolbar({
           ←
         </button>
         <button
-          className="w-8 h-8 flex items-center justify-center rounded text-[#e4e4e7] hover:bg-[#2a2a2e] disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
           onClick={onRedo}
           disabled={!canRedo}
           title="Redo (Ctrl+Shift+Z)"
@@ -72,7 +63,7 @@ export function TopToolbar({
         </button>
       </div>
 
-      <div className="w-px h-6 bg-[#2a2a2e]" />
+      <div className="w-px h-6 bg-[var(--color-border)]" />
 
       {/* Tools */}
       <div className="flex items-center gap-1">
@@ -82,7 +73,7 @@ export function TopToolbar({
             className={`w-8 h-8 flex items-center justify-center rounded text-lg ${
               tool === t.id
                 ? 'bg-[#6366f1] text-white'
-                : 'text-[#e4e4e7] hover:bg-[#2a2a2e]'
+                : 'text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
             }`}
             onClick={() => onToolChange(t.id)}
             title={`${t.label} (${t.key})`}
@@ -92,11 +83,11 @@ export function TopToolbar({
         ))}
       </div>
 
-      <div className="w-px h-6 bg-[#2a2a2e]" />
+      <div className="w-px h-6 bg-[var(--color-border)]" />
 
       {/* Grid size */}
       <select
-        className="h-8 px-2 rounded bg-[#141416] border border-[#2a2a2e] text-[#e4e4e7] text-sm"
+        className="h-8 px-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm"
         value={`${gridSize[0]}x${gridSize[1]}`}
         onChange={(e) => {
           const [w, h] = e.target.value.split('x').map(Number);
@@ -113,24 +104,18 @@ export function TopToolbar({
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Theme color */}
-      <div className="flex items-center gap-1">
-        {THEME_COLORS.map((c) => (
-          <button
-            key={c.value}
-            className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
-              themeColor === c.value ? 'border-white scale-110' : 'border-transparent'
-            }`}
-            style={{ backgroundColor: c.value }}
-            onClick={() => onThemeColorChange(c.value)}
-            title={c.name}
-          />
-        ))}
-      </div>
+      {/* Theme toggle */}
+      <button
+        className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] transition-colors"
+        onClick={onThemeToggle}
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? '☀️' : '🌙'}
+      </button>
 
       {/* Reset */}
       <button
-        className="h-8 px-3 rounded text-text-secondary text-sm hover:bg-border hover:text-[#f87171] transition-colors"
+        className="h-8 px-3 rounded text-[var(--color-text-secondary)] text-sm hover:bg-[var(--color-surface)] hover:text-[#f87171] transition-colors"
         onClick={onReset}
         title="Reset canvas"
       >
@@ -139,8 +124,7 @@ export function TopToolbar({
 
       {/* Export */}
       <button
-        className="h-8 px-4 rounded text-white text-sm font-medium hover:opacity-90 transition-colors"
-        style={{ backgroundColor: themeColor }}
+        className="h-8 px-4 rounded bg-[#6366f1] text-white text-sm font-medium hover:bg-[#4f46e5] transition-colors"
         onClick={onExport}
       >
         Export
