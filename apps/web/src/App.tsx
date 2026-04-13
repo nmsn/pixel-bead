@@ -100,6 +100,13 @@ export function App() {
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       const { tool, currentColorIndex, gridData } = state;
+
+      // Select tool: toggle selection only, no color change
+      if (tool === 'select') {
+        toggleCellSelection(row, col);
+        return;
+      }
+
       let changed = false;
       const newData = gridData.map((r) => [...r]);
 
@@ -119,9 +126,6 @@ export function App() {
         case 'bucket':
           floodFill(row, col, currentColorIndex);
           return;
-        case 'select':
-        default:
-          return;
       }
 
       if (changed) {
@@ -129,12 +133,19 @@ export function App() {
         pushIfChanged(newData);
       }
     },
-    [state, setGridData, floodFill, pushIfChanged]
+    [state, setGridData, floodFill, pushIfChanged, toggleCellSelection]
   );
 
   const handleCellDrag = useCallback(
     (row: number, col: number) => {
       const { tool, currentColorIndex, gridData } = state;
+
+      // Select tool: add to selection while dragging
+      if (tool === 'select') {
+        addToSelection(row, col);
+        return;
+      }
+
       if (tool === 'pen') {
         const newData = gridData.map((r) => [...r]);
         newData[row][col] = currentColorIndex;
@@ -145,7 +156,7 @@ export function App() {
         setGridData(newData);
       }
     },
-    [state, setGridData]
+    [state, setGridData, addToSelection]
   );
 
   // Keyboard shortcuts
@@ -280,7 +291,6 @@ export function App() {
             gridData={state.gridData}
             gridSize={state.gridSize}
             zoom={state.zoom}
-            tool={state.tool}
             onCellClick={handleCellClick}
             onCellDrag={handleCellDrag}
             onDragStart={() => setIsDragging(true)}
@@ -289,8 +299,6 @@ export function App() {
             onZoomChange={setZoom}
             selectedCells={state.selectedCells}
             selectionStyle={state.selectionStyle}
-            onToggleSelection={toggleCellSelection}
-            onAddToSelection={addToSelection}
           />
 
           {/* Hidden file input */}

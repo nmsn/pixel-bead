@@ -1,13 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { Leafer, Rect, Group, Line, PointerEvent } from 'leafer-ui';
 import { PALETTE } from '../../lib/palette-256';
-import { Tool } from 'shared/src/types';
 
 interface PixelCanvasProps {
   gridData: number[][];
   gridSize: [number, number];
   zoom: number;
-  tool: Tool;
   panOffset: { x: number; y: number };
   onCellClick: (row: number, col: number) => void;
   onCellDrag?: (row: number, col: number) => void;
@@ -16,15 +14,12 @@ interface PixelCanvasProps {
   onPanChange?: (panOffset: { x: number; y: number }) => void;
   selectedCells?: Set<string>;
   selectionStyle?: 'outline' | 'overlay' | 'inset';
-  onToggleSelection?: (row: number, col: number) => void;
-  onAddToSelection?: (row: number, col: number) => void;
 }
 
 export function PixelCanvas({
   gridData,
   gridSize,
   zoom: _zoom,
-  tool,
   panOffset,
   onCellClick,
   onCellDrag,
@@ -32,8 +27,6 @@ export function PixelCanvas({
   onPanChange,
   selectedCells,
   selectionStyle,
-  onToggleSelection,
-  onAddToSelection,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Leafer | null>(null);
@@ -56,11 +49,6 @@ export function PixelCanvas({
   useEffect(() => {
     onPanChangeRef.current = onPanChange;
   }, [onPanChange]);
-
-  const toolRef = useRef(tool);
-  useEffect(() => {
-    toolRef.current = tool;
-  }, [tool]);
 
   // Initialize Leafer app
   useEffect(() => {
@@ -296,24 +284,14 @@ export function PixelCanvas({
         rect.on(PointerEvent.DOWN, () => {
           isDraggingRef.current = true;
           onDragStart?.();
-          if (toolRef.current === 'select' && onToggleSelection) {
-            onToggleSelection(row, col);
-          } else {
-            onCellClick(row, col);
-          }
+          onCellClick(row, col);
         });
 
         rect.on(PointerEvent.UP, () => {
           isDraggingRef.current = false;
         });
 
-        if (toolRef.current === 'select' && onAddToSelection) {
-          rect.on(PointerEvent.MOVE, () => {
-            if (isDraggingRef.current) {
-              onAddToSelection(row, col);
-            }
-          });
-        } else if (onCellDrag) {
+        if (onCellDrag) {
           rect.on(PointerEvent.MOVE, () => {
             if (isDraggingRef.current) {
               onCellDrag(row, col);
@@ -330,7 +308,7 @@ export function PixelCanvas({
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', cursor: tool === 'select' ? 'default' : 'crosshair' }}
+      style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
     />
   );
 }
