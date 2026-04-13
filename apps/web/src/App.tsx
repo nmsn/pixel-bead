@@ -21,7 +21,7 @@ function createEmptyGrid(size: [number, number]): number[][] {
 export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
   toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle,
-  backgroundColor, cornerRadius, setBackgroundColor, setCornerRadius } =
+  backgroundColor, cornerRadius, iconScale, setBackgroundColor, setCornerRadius, setIconScale } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -204,22 +204,25 @@ export function App() {
     (size: number) => exportToPng(state.gridData, state.gridSize, size, {
       backgroundColor,
       cornerRadius,
+      iconScale,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
   );
   const handleExportIco = useCallback(
     () => exportToIco(state.gridData, state.gridSize, {
       backgroundColor,
       cornerRadius,
+      iconScale,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
   );
   const handleExportIcns = useCallback(
     () => exportToIcns(state.gridData, state.gridSize, {
       backgroundColor,
       cornerRadius,
+      iconScale,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
   );
 
   // Upload zone overlay
@@ -350,10 +353,12 @@ export function App() {
           <FramePanel
             backgroundColor={backgroundColor}
             cornerRadius={cornerRadius}
+            iconScale={iconScale}
             gridSize={state.gridSize}
             gridData={state.gridData}
             onBackgroundColorChange={setBackgroundColor}
             onCornerRadiusChange={setCornerRadius}
+            onIconScaleChange={setIconScale}
           />
           <ExportPanel
             gridData={state.gridData}

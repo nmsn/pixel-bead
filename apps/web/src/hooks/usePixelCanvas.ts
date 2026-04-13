@@ -9,6 +9,9 @@ export interface PixelCanvasState {
   zoom: number;
   selectedCells: Set<string>;
   selectionStyle: 'outline' | 'overlay' | 'inset';
+  backgroundColor: string;
+  cornerRadius: number;
+  iconScale: number;
 }
 
 export function usePixelCanvas() {
@@ -20,6 +23,9 @@ export function usePixelCanvas() {
     zoom: 1,
     selectedCells: new Set<string>(),
     selectionStyle: 'outline',
+    backgroundColor: '#ffffff',
+    cornerRadius: 0,
+    iconScale: 1,
   });
 
   const setGridData = useCallback((data: number[][]) => {
@@ -135,6 +141,18 @@ export function usePixelCanvas() {
     setState((s) => ({ ...s, selectionStyle: style }));
   }, []);
 
+  const setBackgroundColor = useCallback((color: string) => {
+    setState((s) => ({ ...s, backgroundColor: color }));
+  }, []);
+
+  const setCornerRadius = useCallback((radius: number) => {
+    setState((s) => ({ ...s, cornerRadius: radius }));
+  }, []);
+
+  const setIconScale = useCallback((scale: number) => {
+    setState((s) => ({ ...s, iconScale: scale }));
+  }, []);
+
   return {
     state,
     setGridData,
@@ -150,5 +168,11 @@ export function usePixelCanvas() {
     clearSelection,
     applyColorToSelection,
     setSelectionStyle,
+    backgroundColor: state.backgroundColor,
+    cornerRadius: state.cornerRadius,
+    iconScale: state.iconScale,
+    setBackgroundColor,
+    setCornerRadius,
+    setIconScale,
   };
 }

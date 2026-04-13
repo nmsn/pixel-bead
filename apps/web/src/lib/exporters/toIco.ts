@@ -3,6 +3,7 @@ import { PALETTE } from '../palette-256';
 export interface FrameOptions {
   backgroundColor?: string;
   cornerRadius?: number;
+  iconScale?: number;
 }
 
 // renderToCanvas is exported so toIcns.ts can reuse it
@@ -13,7 +14,7 @@ export function renderToCanvas(
   options: FrameOptions = {}
 ): string {
   const [cols, rows] = gridSize;
-  const { backgroundColor = '#ffffff', cornerRadius = 0 } = options;
+  const { backgroundColor = '#ffffff', cornerRadius = 0, iconScale = 1 } = options;
 
   if (cols <= 0 || rows <= 0 || outputSize <= 0) {
     // Return empty canvas
@@ -38,10 +39,11 @@ export function renderToCanvas(
     ctx.fillRect(0, 0, outputSize, outputSize);
   }
 
-  // Calculate cell size to fit grid centered
-  const cellSize = outputSize / Math.max(cols, rows);
-  const offsetX = (outputSize - cols * cellSize) / 2;
-  const offsetY = (outputSize - rows * cellSize) / 2;
+  // Calculate icon size based on scale
+  const iconSize = outputSize * iconScale;
+  const cellSize = iconSize / Math.max(cols, rows);
+  const offsetX = (outputSize - iconSize) / 2;
+  const offsetY = (outputSize - iconSize) / 2;
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {

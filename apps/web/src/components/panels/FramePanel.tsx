@@ -4,19 +4,23 @@ import { PALETTE } from '../../lib/palette-256';
 interface FramePanelProps {
   backgroundColor: string;
   cornerRadius: number;
+  iconScale: number;
   gridSize: [number, number];
   gridData: number[][];
   onBackgroundColorChange: (color: string) => void;
   onCornerRadiusChange: (radius: number) => void;
+  onIconScaleChange: (scale: number) => void;
 }
 
 export function FramePanel({
   backgroundColor,
   cornerRadius,
+  iconScale,
   gridSize,
   gridData,
   onBackgroundColorChange,
   onCornerRadiusChange,
+  onIconScaleChange,
 }: FramePanelProps) {
   const previewRef = useRef<HTMLCanvasElement>(null);
 
@@ -29,7 +33,8 @@ export function FramePanel({
     if (!ctx) return;
 
     const [cols, rows] = gridSize;
-    const cellSize = canvas.width / Math.max(cols, rows);
+    const padding = 16;
+    const bgSize = canvas.width - padding * 2;
 
     // Clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -45,19 +50,19 @@ export function FramePanel({
 
     // Draw rounded rect background
     ctx.fillStyle = backgroundColor;
-    const padding = 16;
-    const size = canvas.width - padding * 2;
     if (cornerRadius > 0) {
       ctx.beginPath();
-      ctx.roundRect(padding, padding, size, size, cornerRadius);
+      ctx.roundRect(padding, padding, bgSize, bgSize, cornerRadius);
       ctx.fill();
     } else {
-      ctx.fillRect(padding, padding, size, size);
+      ctx.fillRect(padding, padding, bgSize, bgSize);
     }
 
-    // Draw grid content
-    const offsetX = padding + (size - cols * cellSize) / 2;
-    const offsetY = padding + (size - rows * cellSize) / 2;
+    // Calculate icon size based on scale
+    const iconSize = bgSize * iconScale;
+    const cellSize = iconSize / Math.max(cols, rows);
+    const offsetX = padding + (bgSize - iconSize) / 2;
+    const offsetY = padding + (bgSize - iconSize) / 2;
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -73,7 +78,7 @@ export function FramePanel({
         }
       }
     }
-  }, [backgroundColor, cornerRadius, gridSize, gridData]);
+  }, [backgroundColor, cornerRadius, iconScale, gridSize, gridData]);
 
   return (
     <div className="w-[280px] bg-[#141416] border-l border-[#2a2a2e] flex flex-col">
@@ -116,6 +121,21 @@ export function FramePanel({
             className="flex-1"
           />
           <span className="text-xs text-[#e4e4e7] font-mono w-12 text-right">{cornerRadius}px</span>
+        </div>
+
+        {/* Icon Scale */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#71717a]">图标大小:</span>
+          <input
+            type="range"
+            min="0.1"
+            max="1"
+            step="0.05"
+            value={iconScale}
+            onChange={(e) => onIconScaleChange(Number(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-[#e4e4e7] font-mono w-12 text-right">{Math.round(iconScale * 100)}%</span>
         </div>
       </div>
     </div>
