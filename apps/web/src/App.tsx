@@ -57,6 +57,14 @@ export function App() {
     }
   }, []);
 
+  // 主题初始化
+  useEffect(() => {
+    const saved = localStorage.getItem('pixel-bead-is-dark');
+    const isDark = saved !== null ? JSON.parse(saved) : true;
+    setIsDark(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
+
   // Save to localStorage on change
   useEffect(() => {
     if (state.gridData.length > 0) {

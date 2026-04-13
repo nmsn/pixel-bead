@@ -12,7 +12,7 @@ export interface PixelCanvasState {
   backgroundColor: string;
   cornerRadius: number;
   iconScale: number;
-  themeColor: string;
+  isDark: boolean;
 }
 
 export function usePixelCanvas() {
@@ -27,7 +27,7 @@ export function usePixelCanvas() {
     backgroundColor: '#ffffff',
     cornerRadius: 0,
     iconScale: 1,
-    themeColor: '#6366f1',
+    isDark: true,
   });
 
   const setGridData = useCallback((data: number[][]) => {
@@ -155,8 +155,8 @@ export function usePixelCanvas() {
     setState((s) => ({ ...s, iconScale: scale }));
   }, []);
 
-  const setThemeColor = useCallback((color: string) => {
-    setState((s) => ({ ...s, themeColor: color }));
+  const setIsDark = useCallback((isDark: boolean) => {
+    setState((s) => ({ ...s, isDark }));
   }, []);
 
   return {
@@ -177,10 +177,10 @@ export function usePixelCanvas() {
     backgroundColor: state.backgroundColor,
     cornerRadius: state.cornerRadius,
     iconScale: state.iconScale,
-    themeColor: state.themeColor,
+    isDark: state.isDark,
     setBackgroundColor,
     setCornerRadius,
     setIconScale,
-    setThemeColor,
+    setIsDark,
   };
 }
