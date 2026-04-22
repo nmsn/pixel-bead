@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Leafer, Rect, Group, Line, Text, PointerEvent } from 'leafer-ui';
+import { Stage, Layer } from 'react-konva';
+import Konva from 'konva';
 import { PALETTE } from '../../lib/palette-256';
 
 interface PixelCanvasProps {
@@ -31,12 +32,12 @@ export function PixelCanvas({
   isDark,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<Leafer | null>(null);
-  const cellsGroupRef = useRef<Group | null>(null);
-  const highlightGroupRef = useRef<Group | null>(null);
-  const gridGroupRef = useRef<Group | null>(null);
-  const labelsGroupRef = useRef<Group | null>(null);
-  const cellRectsRef = useRef<Map<string, Rect>>(new Map());
+  const stageRef = useRef<Konva.Stage>(null);
+  const cellsLayerRef = useRef<Konva.Layer>(null);
+  const highlightLayerRef = useRef<Konva.Layer>(null);
+  const gridLayerRef = useRef<Konva.Layer>(null);
+  const labelsLayerRef = useRef<Konva.Layer>(null);
+  const cellRectsRef = useRef<Map<string, Konva.Rect>>(new Map());
   const prevGridSizeRef = useRef<[number, number] | null>(null);
   const isDraggingRef = useRef(false);
   const isPanningRef = useRef(false);
@@ -68,46 +69,8 @@ export function PixelCanvas({
     onCellDragRef.current = onCellDrag;
   }, [onCellDrag]);
 
-  // Initialize Leafer app
+  // Middle-click pan handlers
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const CANVAS_SIZE = 800;
-
-    const app = new Leafer({
-      view: containerRef.current,
-      width: CANVAS_SIZE,
-      height: CANVAS_SIZE,
-      fill: isDarkRef.current ? '#18181b' : '#f4f4f5',
-    });
-
-    // Create cells group (bottom layer)
-    const cellsGroup = new Group();
-    app.add(cellsGroup);
-    cellsGroupRef.current = cellsGroup;
-
-    // Create highlight group (middle layer)
-    const highlightGroup = new Group();
-    highlightGroup.hitChildren = false;
-    app.add(highlightGroup);
-    highlightGroupRef.current = highlightGroup;
-
-    // Create grid group (top layer, pointer-events: none)
-    const gridGroup = new Group();
-    // Disable hit testing to make grid non-interactive
-    gridGroup.hitChildren = false;
-    app.add(gridGroup);
-    gridGroupRef.current = gridGroup;
-
-    // Create labels group for row/column numbers
-    const labelsGroup = new Group();
-    labelsGroup.hitChildren = false;
-    app.add(labelsGroup);
-    labelsGroupRef.current = labelsGroup;
-
-    appRef.current = app;
-
-    // Middle-click pan handlers
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button === 1) { // Middle button
         e.preventDefault();
@@ -133,32 +96,23 @@ export function PixelCanvas({
     };
 
     const container = containerRef.current;
-    container.addEventListener('mousedown', handleMouseDown);
+    container?.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      app.destroy();
-      appRef.current = null;
-      container.removeEventListener('mousedown', handleMouseDown);
+      container?.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Update Leafer background when isDark changes
-  useEffect(() => {
-    if (!appRef.current) return;
-    appRef.current.fill = isDark ? '#18181b' : '#f4f4f5';
-  }, [isDark]);
 
   // Update cell positions only (no re-render) when zoom/panOffset changes
   useEffect(() => {
-    const group = cellsGroupRef.current;
-    const gridGroup = gridGroupRef.current;
-    const labelsGroup = labelsGroupRef.current;
-    if (!group || !gridGroup || !labelsGroup) return;
+    const cellsLayer = cellsLayerRef.current;
+    const gridLayer = gridLayerRef.current;
+    const labelsLayer = labelsLayerRef.current;
+    if (!cellsLayer || !gridLayer || !labelsLayer) return;
 
     const CANVAS_SIZE = 800;
     const [cols, rows] = gridSize;
@@ -172,7 +126,7 @@ export function PixelCanvas({
     // Update existing cell rects
     cellRectsRef.current.forEach((rect, key) => {
       const [row, col] = key.split(',').map(Number);
-      rect.set({
+      rect.setAttrs({
         x: offsetX + col * cellSize,
         y: offsetY + row * cellSize,
         width: cellSize,
@@ -181,31 +135,31 @@ export function PixelCanvas({
     });
 
     // Update grid lines only (clear and redraw)
-    gridGroup.children.forEach((child) => child.remove());
+    gridLayer.destroyChildren();
 
     for (let i = 0; i <= cols; i++) {
-      const line = new Line({
+      const line = new Konva.Line({
         points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
         stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
         strokeWidth: 1,
       });
-      gridGroup.add(line);
+      gridLayer.add(line);
     }
     for (let i = 0; i <= rows; i++) {
-      const line = new Line({
+      const line = new Konva.Line({
         points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
         stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
         strokeWidth: 1,
       });
-      gridGroup.add(line);
+      gridLayer.add(line);
     }
 
     // Update labels
-    labelsGroup.children.forEach((child) => child.remove());
+    labelsLayer.destroyChildren();
 
     // Column numbers (top)
     for (let col = 0; col < cols; col++) {
-      const text = new Text({
+      const text = new Konva.Text({
         text: String(col),
         x: offsetX + col * cellSize + cellSize / 2,
         y: offsetY - labelHeight,
@@ -216,12 +170,12 @@ export function PixelCanvas({
         fontSize: 10,
         fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
-      labelsGroup.add(text);
+      labelsLayer.add(text);
     }
 
     // Row numbers (left)
     for (let row = 0; row < rows; row++) {
-      const text = new Text({
+      const text = new Konva.Text({
         text: String(row),
         x: offsetX - labelWidth,
         y: offsetY + row * cellSize + cellSize / 2,
@@ -232,16 +186,16 @@ export function PixelCanvas({
         fontSize: 10,
         fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
-      labelsGroup.add(text);
+      labelsLayer.add(text);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_zoom, panOffset]);
 
   // Rebuild highlight overlay when selectedCells or selectionStyle changes
   useEffect(() => {
-    const group = highlightGroupRef.current;
-    if (!group) return;
-    group.clear();
+    const layer = highlightLayerRef.current;
+    if (!layer) return;
+    layer.destroyChildren();
 
     const CANVAS_SIZE = 800;
     const [cols, rows] = gridSize;
@@ -253,7 +207,7 @@ export function PixelCanvas({
     const style = selectionStyle ?? 'outline';
     (selectedCells ?? new Set()).forEach((key) => {
       const [row, col] = key.split(',').map(Number);
-      const rect = new Rect({
+      const rect = new Konva.Rect({
         x: offsetX + col * cellSize,
         y: offsetY + row * cellSize,
         width: cellSize,
@@ -261,26 +215,32 @@ export function PixelCanvas({
       });
 
       if (style === 'outline') {
-        rect.stroke = '#a5b4fc';
-        rect.strokeWidth = 2.5;
-        rect.shadow = { color: 'rgba(165,180,252,0.5)', blur: 6, offsetX: 0, offsetY: 0 };
+        rect.setAttrs({
+          stroke: '#a5b4fc',
+          strokeWidth: 2.5,
+          shadowColor: 'rgba(165,180,252,0.5)',
+          shadowBlur: 6,
+          shadowEnabled: true,
+        });
       } else if (style === 'overlay') {
-        rect.fill = 'rgba(99,102,241,0.5)';
+        rect.setAttrs({ fill: 'rgba(99,102,241,0.5)' });
       } else {
-        rect.stroke = '#ffffff';
-        rect.strokeWidth = 2;
-        rect.strokeAlign = 'inside';
+        rect.setAttrs({
+          stroke: '#ffffff',
+          strokeWidth: 2,
+          strokeScaleEnabled: false,
+        });
       }
 
-      group.add(rect);
+      layer.add(rect);
     });
   }, [selectedCells, selectionStyle, gridSize, panOffset, _zoom]);
 
   // Rebuild canvas when gridSize changes
   useEffect(() => {
-    const group = cellsGroupRef.current;
-    const gridGroup = gridGroupRef.current;
-    if (!group || !gridGroup) return;
+    const cellsLayer = cellsLayerRef.current;
+    const gridLayer = gridLayerRef.current;
+    if (!cellsLayer || !gridLayer) return;
 
     rebuildCanvas(gridData, gridSize, panOffset);
 
@@ -288,17 +248,17 @@ export function PixelCanvas({
   }, [gridSize, gridData]);
 
   function rebuildCanvas(data: number[][], size: [number, number], pan: { x: number; y: number }) {
-    const group = cellsGroupRef.current!;
-    const gridGroup = gridGroupRef.current!;
-    const labelsGroup = labelsGroupRef.current!;
+    const cellsLayer = cellsLayerRef.current!;
+    const gridLayer = gridLayerRef.current!;
+    const labelsLayer = labelsLayerRef.current!;
 
     const CANVAS_SIZE = 800;
     const [cols, rows] = size;
 
     // Clear all existing cells and grid lines completely
-    group.clear();
-    gridGroup.clear();
-    labelsGroup.clear();
+    cellsLayer.destroyChildren();
+    gridLayer.destroyChildren();
+    labelsLayer.destroyChildren();
     cellRectsRef.current.clear();
     prevGridSizeRef.current = [cols, rows];
 
@@ -311,8 +271,8 @@ export function PixelCanvas({
 
     // Draw grid lines
     for (let i = 0; i <= cols; i++) {
-      gridGroup.add(
-        new Line({
+      gridLayer.add(
+        new Konva.Line({
           points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
           stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
           strokeWidth: 1,
@@ -320,8 +280,8 @@ export function PixelCanvas({
       );
     }
     for (let i = 0; i <= rows; i++) {
-      gridGroup.add(
-        new Line({
+      gridLayer.add(
+        new Konva.Line({
           points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
           stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
           strokeWidth: 1,
@@ -331,7 +291,7 @@ export function PixelCanvas({
 
     // Draw column numbers (top)
     for (let col = 0; col < cols; col++) {
-      const text = new Text({
+      const text = new Konva.Text({
         text: String(col),
         x: offsetX + col * cellSize + cellSize / 2,
         y: offsetY - labelHeight,
@@ -342,12 +302,12 @@ export function PixelCanvas({
         fontSize: 10,
         fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
-      labelsGroup.add(text);
+      labelsLayer.add(text);
     }
 
     // Draw row numbers (left)
     for (let row = 0; row < rows; row++) {
-      const text = new Text({
+      const text = new Konva.Text({
         text: String(row),
         x: offsetX - labelWidth,
         y: offsetY + row * cellSize + cellSize / 2,
@@ -358,7 +318,7 @@ export function PixelCanvas({
         fontSize: 10,
         fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
       });
-      labelsGroup.add(text);
+      labelsLayer.add(text);
     }
 
     // Draw pixel cells
@@ -371,7 +331,7 @@ export function PixelCanvas({
             ? undefined
             : '#' + PALETTE.colors[colorIndex];
 
-        const rect = new Rect({
+        const rect = new Konva.Rect({
           stroke: 'rgba(0,0,0,0.2)',
           strokeWidth: 0.5,
           draggable: false,
@@ -380,30 +340,22 @@ export function PixelCanvas({
           width: cellSize,
           height: cellSize,
           fill: fill || undefined,
-        });
-
-        (rect as any).__row = row;
-        (rect as any).__col = col;
-
-        rect.on(PointerEvent.DOWN, () => {
-          isDraggingRef.current = true;
-          onDragStart?.();
-          onCellClickRef.current(row, col);
-        });
-
-        rect.on(PointerEvent.UP, () => {
-          isDraggingRef.current = false;
-        });
-
-        if (onCellDragRef.current) {
-          rect.on(PointerEvent.MOVE, () => {
+          onMouseDown: () => {
+            isDraggingRef.current = true;
+            onDragStart?.();
+            onCellClickRef.current(row, col);
+          },
+          onMouseUp: () => {
+            isDraggingRef.current = false;
+          },
+          onMouseMove: () => {
             if (isDraggingRef.current) {
               onCellDragRef.current?.(row, col);
             }
-          });
-        }
+          },
+        });
 
-        group.add(rect);
+        cellsLayer.add(rect);
         cellRectsRef.current.set(key, rect);
       }
     }
@@ -413,6 +365,33 @@ export function PixelCanvas({
     <div
       ref={containerRef}
       style={{ width: 800, height: 800, cursor: 'crosshair' }}
-    />
+    >
+      <Stage
+        ref={stageRef}
+        width={800}
+        height={800}
+        fill={isDark ? '#18181b' : '#f4f4f5'}
+      >
+        {/* Cells layer - bottom */}
+        <Layer ref={cellsLayerRef}>
+          {/* cells rendered via useEffect */}
+        </Layer>
+
+        {/* Highlight layer - middle */}
+        <Layer ref={highlightLayerRef}>
+          {/* selections rendered via useEffect */}
+        </Layer>
+
+        {/* Grid layer - top, non-interactive */}
+        <Layer ref={gridLayerRef}>
+          {/* grid lines rendered via useEffect */}
+        </Layer>
+
+        {/* Labels layer */}
+        <Layer ref={labelsLayerRef}>
+          {/* row/column labels rendered via useEffect */}
+        </Layer>
+      </Stage>
+    </div>
   );
 }
