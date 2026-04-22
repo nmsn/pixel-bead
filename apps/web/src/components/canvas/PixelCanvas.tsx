@@ -112,7 +112,8 @@ export function PixelCanvas({
     const cellsLayer = cellsLayerRef.current;
     const gridLayer = gridLayerRef.current;
     const labelsLayer = labelsLayerRef.current;
-    if (!cellsLayer || !gridLayer || !labelsLayer) return;
+    const highlightLayer = highlightLayerRef.current;
+    if (!cellsLayer || !gridLayer || !labelsLayer || !highlightLayer) return;
 
     const CANVAS_SIZE = 800;
     const [cols, rows] = gridSize;
@@ -242,12 +243,12 @@ export function PixelCanvas({
     const gridLayer = gridLayerRef.current;
     if (!cellsLayer || !gridLayer) return;
 
-    rebuildCanvas(gridData, gridSize, panOffset);
+    rebuildCanvas(gridData, gridSize);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gridSize, gridData]);
 
-  function rebuildCanvas(data: number[][], size: [number, number], pan: { x: number; y: number }) {
+  function rebuildCanvas(data: number[][], size: [number, number]) {
     const cellsLayer = cellsLayerRef.current!;
     const gridLayer = gridLayerRef.current!;
     const labelsLayer = labelsLayerRef.current!;
@@ -266,8 +267,8 @@ export function PixelCanvas({
     const labelWidth = 24;
     const labelHeight = 16;
 
-    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + pan.x;
-    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + pan.y;
+    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
+    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
 
     // Draw grid lines
     for (let i = 0; i <= cols; i++) {
@@ -364,14 +365,14 @@ export function PixelCanvas({
   return (
     <div
       ref={containerRef}
-      style={{ width: 800, height: 800, cursor: 'crosshair' }}
+      style={{
+        width: 800,
+        height: 800,
+        cursor: 'crosshair',
+        backgroundColor: isDark ? '#18181b' : '#f4f4f5',
+      }}
     >
-      <Stage
-        ref={stageRef}
-        width={800}
-        height={800}
-        fill={isDark ? '#18181b' : '#f4f4f5'}
-      >
+      <Stage ref={stageRef} width={800} height={800}>
         {/* Cells layer - bottom */}
         <Layer ref={cellsLayerRef}>
           {/* cells rendered via useEffect */}
@@ -382,12 +383,12 @@ export function PixelCanvas({
           {/* selections rendered via useEffect */}
         </Layer>
 
-        {/* Grid layer - top, non-interactive */}
+        {/* Grid layer - non-interactive */}
         <Layer ref={gridLayerRef}>
           {/* grid lines rendered via useEffect */}
         </Layer>
 
-        {/* Labels layer */}
+        {/* Labels layer - topmost */}
         <Layer ref={labelsLayerRef}>
           {/* row/column labels rendered via useEffect */}
         </Layer>
