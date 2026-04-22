@@ -122,7 +122,13 @@ export function App() {
 
       switch (tool) {
         case 'pen':
-          if (newData[row][col] !== currentColorIndex) {
+          if (currentColorIndex === null) {
+            // Transparent - set to -1
+            if (newData[row][col] !== -1) {
+              newData[row][col] = -1;
+              changed = true;
+            }
+          } else if (newData[row][col] !== currentColorIndex) {
             newData[row][col] = currentColorIndex;
             changed = true;
           }
@@ -134,6 +140,8 @@ export function App() {
           }
           break;
         case 'bucket':
+          // When currentColorIndex is null (transparent), bucket fill is a no-op
+          if (currentColorIndex === null) return;
           floodFill(row, col, currentColorIndex);
           return;
         case 'eyedropper':
@@ -161,7 +169,11 @@ export function App() {
 
       if (tool === 'pen') {
         const newData = gridData.map((r) => [...r]);
-        newData[row][col] = currentColorIndex;
+        if (currentColorIndex === null) {
+          newData[row][col] = -1;
+        } else {
+          newData[row][col] = currentColorIndex;
+        }
         setGridData(newData);
         pushIfChanged(newData);
       } else if (tool === 'eraser') {
