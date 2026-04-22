@@ -8,18 +8,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "leafer": "^2.0.8",
+    "konva": "^9.3.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-konva": "^18.2.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitest/browser": "^4.1.4",
     "@vitest/browser-playwright": "^4.1.4",
-    "canvas": "^3.2.3",
+    "canvas": "3",
     "happy-dom": "^20.8.9",
     "jsdom": "^29.0.2",
     "postcss": "^8.5.9",
