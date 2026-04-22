@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { PALETTE } from '../../lib/palette-256';
 
 interface ColorPaletteProps {
-  currentColorIndex: number;
-  onColorSelect: (index: number) => void;
+  currentColorIndex: number | null;
+  onColorSelect: (index: number | null) => void;
 }
 
 export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const toggleColor = currentColorIndex === null ? '#ccc' : '#' + PALETTE.colors[currentColorIndex];
 
   return (
     <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
@@ -18,10 +20,27 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
       >
         <span className="text-sm text-[var(--color-text-secondary)]">Palette</span>
         <div className="flex items-center gap-2">
-          <div
-            className="w-5 h-5 rounded border border-[var(--color-border)]"
-            style={{ backgroundColor: '#' + PALETTE.colors[currentColorIndex] }}
-          />
+          {currentColorIndex === null ? (
+            <div
+              className="w-5 h-5 rounded border border-[var(--color-border)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(45deg, #ccc 25%, transparent 25%),
+                  linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, #ccc 75%),
+                  linear-gradient(-45deg, transparent 75%, #ccc 75%)
+                `,
+                backgroundSize: '8px 8px',
+                backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+                backgroundColor: 'white',
+              }}
+            />
+          ) : (
+            <div
+              className="w-5 h-5 rounded border border-[var(--color-border)]"
+              style={{ backgroundColor: '#' + PALETTE.colors[currentColorIndex] }}
+            />
+          )}
           <span className="text-xs text-[var(--color-text-secondary)]">{isOpen ? '▲' : '▼'}</span>
         </div>
       </button>
@@ -33,16 +52,40 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
             className="grid gap-px"
             style={{ gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}
           >
+            {/* Transparent swatch */}
+            <button
+              className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
+                currentColorIndex === null
+                  ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
+                  : ''
+              }`}
+              style={{
+                backgroundImage: `
+                  linear-gradient(45deg, #ccc 25%, transparent 25%),
+                  linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, #ccc 75%),
+                  linear-gradient(-45deg, transparent 75%, #ccc 75%)
+                `,
+                backgroundSize: '8px 8px',
+                backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+                backgroundColor: 'white',
+              }}
+              onClick={() => onColorSelect(null)}
+              data-transparent="true"
+              title="Transparent"
+            />
+
+            {/* Palette colors - shifted by 1 (transparent at 0, colors at 1-255) */}
             {PALETTE.colors.map((color, index) => (
               <button
                 key={index}
                 className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
-                  index === currentColorIndex
+                  currentColorIndex === index + 1
                     ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
                     : ''
                 }`}
                 style={{ backgroundColor: '#' + color }}
-                onClick={() => onColorSelect(index)}
+                onClick={() => onColorSelect(index + 1)}
                 title={`#${color}`}
               />
             ))}
