@@ -3,8 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { PixelCanvas } from './PixelCanvas';
 
-// Mock react-konva to track Rect elements with their event handlers
+// Mock react-konva to track Rect elements with their event handlers and fill props
 const rectEventHandlers: Map<number, { onMouseDown?: () => void }> = new Map();
+const rectProps: Map<number, { fill?: string; fillPatternImage?: unknown }> = new Map();
 let rectIdCounter = 0;
 
 // Mock react-konva before import
@@ -15,18 +16,22 @@ vi.mock('react-konva', () => {
     width?: number;
     height?: number;
     fill?: string;
+    fillPatternImage?: unknown;
     stroke?: string;
     strokeWidth?: number;
     onMouseDown?: () => void;
     onMouseUp?: () => void;
     onMouseMove?: () => void;
-  }> = ({ onMouseDown, onMouseUp, onMouseMove, ...props }) => {
+  }> = ({ onMouseDown, onMouseUp, onMouseMove, fill, fillPatternImage, ...props }) => {
     const id = rectIdCounter++;
     if (onMouseDown) rectEventHandlers.set(id, { onMouseDown });
+    rectProps.set(id, { fill, fillPatternImage });
     return (
       <div
         data-rect-id={id}
         data-testid={`cell-rect-${id}`}
+        data-fill={fill}
+        data-has-pattern={fillPatternImage ? 'true' : 'false'}
         {...props}
       />
     );
@@ -82,6 +87,7 @@ vi.mock('konva', () => ({
 describe('PixelCanvas', () => {
   beforeEach(() => {
     rectEventHandlers.clear();
+    rectProps.clear();
     rectIdCounter = 0;
   });
 
@@ -141,5 +147,26 @@ describe('PixelCanvas', () => {
 
     // onCellClick should have been called
     expect(onCellClick).toHaveBeenCalled();
+  });
+
+  it('renders transparent cells with explicit transparent fill and checkerboard pattern', () => {
+    const mockGrid = [[-1]];
+
+    render(
+      <PixelCanvas
+        gridData={mockGrid}
+        gridSize={[1, 1]}
+        zoom={1}
+        panOffset={{ x: 0, y: 0 }}
+        onCellClick={vi.fn()}
+        isDark={false}
+      />
+    );
+
+    const firstRect = document.querySelector('[data-rect-id]');
+    expect(firstRect).toBeTruthy();
+    // Transparent cells don't have fill attribute, only fillPatternImage
+    expect(firstRect?.getAttribute('data-fill')).toBeNull();
+    expect(firstRect?.getAttribute('data-has-pattern')).toBe('true');
   });
 });

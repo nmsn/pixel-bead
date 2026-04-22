@@ -2,9 +2,6 @@ import { useEffect, useRef, useMemo } from 'react';
 import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { PALETTE } from '../../lib/palette-256';
 
-// Transparent fill for Konva Rect
-const TRANSPARENT_FILL = 'rgba(0,0,0,0)';
-
 function createCheckerboardImage(): HTMLImageElement | null {
   if (typeof document === 'undefined') return null;
 
@@ -178,7 +175,7 @@ export function PixelCanvas({
     const cellData: {
       row: number;
       col: number;
-      fill: string | undefined;
+      fill?: string;
       fillPatternImage?: HTMLImageElement;
       key: string;
       x: number;
@@ -190,17 +187,25 @@ export function PixelCanvas({
         const colorIndex = gridData[row]?.[col];
         const isTransparent = colorIndex === -1 || colorIndex === undefined;
 
-        cellData.push({
-          row,
-          col,
-          // Keep fill explicitly transparent for transparent cells.
-          // Konva's default fill is black when fill is omitted.
-          fill: isTransparent ? TRANSPARENT_FILL : '#' + PALETTE.colors[colorIndex],
-          fillPatternImage: isTransparent ? (checkerboardPattern ?? undefined) : undefined,
-          key: `${row},${col}`,
-          x: offsetX + col * cellSize,
-          y: offsetY + row * cellSize,
-        });
+        if (isTransparent) {
+          cellData.push({
+            row,
+            col,
+            fillPatternImage: checkerboardPattern ?? undefined,
+            key: `${row},${col}`,
+            x: offsetX + col * cellSize,
+            y: offsetY + row * cellSize,
+          });
+        } else {
+          cellData.push({
+            row,
+            col,
+            fill: '#' + PALETTE.colors[colorIndex],
+            key: `${row},${col}`,
+            x: offsetX + col * cellSize,
+            y: offsetY + row * cellSize,
+          });
+        }
       }
     }
     return cellData;
