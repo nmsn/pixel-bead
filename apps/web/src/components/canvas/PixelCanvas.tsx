@@ -19,7 +19,7 @@ interface PixelCanvasProps {
 const CANVAS_SIZE = 800;
 const LABEL_WIDTH = 24;
 const LABEL_HEIGHT = 16;
-const CHECKER_DARK = '#cccccc';
+const CHECKER_DARK = '#dddddd';
 const CHECKER_LIGHT = '#ffffff';
 const TRANSPARENT_FILL = 'rgba(0,0,0,0)';
 const CELL_STROKE = 'rgba(0,0,0,0.2)';
