@@ -2,6 +2,16 @@ import { useEffect, useRef, useMemo } from 'react';
 import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { PALETTE } from '../../lib/palette-256';
 
+// Create checkerboard pattern image for transparent cells
+// Using a data URL to avoid canvas.toDataURL() issues in test environments
+const CHECKERBOARD_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAH0lEQVQ4T2NkYGD4z0ABYBw1YDQMRsNgNAyGbhgAAPE/APHyRqFYAAAAAElFTkSuQmCC';
+
+function getCheckerboardImage(): HTMLImageElement {
+  const img = new Image();
+  img.src = CHECKERBOARD_DATA_URL;
+  return img;
+}
+
 interface PixelCanvasProps {
   gridData: number[][];
   gridSize: [number, number];
@@ -166,6 +176,7 @@ export function PixelCanvas({
       row: number;
       col: number;
       fill: string | undefined;
+      fillPatternImage?: HTMLImageElement;
       key: string;
       x: number;
       y: number;
@@ -174,15 +185,13 @@ export function PixelCanvas({
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const colorIndex = gridData[row]?.[col];
-        const fill =
-          colorIndex === -1 || colorIndex === undefined
-            ? undefined
-            : '#' + PALETTE.colors[colorIndex];
+        const isTransparent = colorIndex === -1 || colorIndex === undefined;
 
         cellData.push({
           row,
           col,
-          fill,
+          fill: isTransparent ? undefined : '#' + PALETTE.colors[colorIndex],
+          fillPatternImage: isTransparent ? getCheckerboardImage() : undefined,
           key: `${row},${col}`,
           x: offsetX + col * cellSize,
           y: offsetY + row * cellSize,
@@ -278,7 +287,8 @@ export function PixelCanvas({
               y={cell.y}
               width={gridGeometry.cellSize}
               height={gridGeometry.cellSize}
-              fill={cell.fill}
+              fill={cell.fill || 'transparent'}
+              fillPatternImage={cell.fillPatternImage}
               stroke="rgba(0,0,0,0.2)"
               strokeWidth={0.5}
               onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
