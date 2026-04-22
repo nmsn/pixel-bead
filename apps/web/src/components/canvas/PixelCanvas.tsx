@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Stage, Layer } from 'react-konva';
-import Konva from 'konva';
+import { useEffect, useRef, useMemo } from 'react';
+import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { PALETTE } from '../../lib/palette-256';
 
 interface PixelCanvasProps {
@@ -18,6 +17,10 @@ interface PixelCanvasProps {
   isDark: boolean;
 }
 
+const CANVAS_SIZE = 800;
+const LABEL_WIDTH = 24;
+const LABEL_HEIGHT = 16;
+
 export function PixelCanvas({
   gridData,
   gridSize,
@@ -32,13 +35,6 @@ export function PixelCanvas({
   isDark,
 }: PixelCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<Konva.Stage>(null);
-  const cellsLayerRef = useRef<Konva.Layer>(null);
-  const highlightLayerRef = useRef<Konva.Layer>(null);
-  const gridLayerRef = useRef<Konva.Layer>(null);
-  const labelsLayerRef = useRef<Konva.Layer>(null);
-  const cellRectsRef = useRef<Map<string, Konva.Rect>>(new Map());
-  const prevGridSizeRef = useRef<[number, number] | null>(null);
   const isDraggingRef = useRef(false);
   const isPanningRef = useRef(false);
   const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -72,7 +68,7 @@ export function PixelCanvas({
   // Middle-click pan handlers
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 1) { // Middle button
+      if (e.button === 1) {
         e.preventDefault();
         isPanningRef.current = true;
         lastPanPointRef.current = { x: e.clientX, y: e.clientY };
@@ -84,7 +80,10 @@ export function PixelCanvas({
         const dx = e.clientX - lastPanPointRef.current.x;
         const dy = e.clientY - lastPanPointRef.current.y;
         lastPanPointRef.current = { x: e.clientX, y: e.clientY };
-        onPanChangeRef.current({ x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy });
+        onPanChangeRef.current({
+          x: panOffsetRef.current.x + dx,
+          y: panOffsetRef.current.y + dy,
+        });
       }
     };
 
@@ -107,290 +106,235 @@ export function PixelCanvas({
     };
   }, []);
 
-  // Update cell positions only (no re-render) when zoom/panOffset changes
-  useEffect(() => {
-    const cellsLayer = cellsLayerRef.current;
-    const gridLayer = gridLayerRef.current;
-    const labelsLayer = labelsLayerRef.current;
-    const highlightLayer = highlightLayerRef.current;
-    if (!cellsLayer || !gridLayer || !labelsLayer || !highlightLayer) return;
-
-    const CANVAS_SIZE = 800;
+  // Calculate grid geometry
+  const gridGeometry = useMemo(() => {
     const [cols, rows] = gridSize;
     const cellSize = CANVAS_SIZE / Math.max(cols, rows);
-    const labelWidth = 24;
-    const labelHeight = 16;
-
     const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
     const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
+    return { cols, rows, cellSize, offsetX, offsetY };
+  }, [gridSize, panOffset]);
 
-    // Update existing cell rects
-    cellRectsRef.current.forEach((rect, key) => {
-      const [row, col] = key.split(',').map(Number);
-      rect.setAttrs({
-        x: offsetX + col * cellSize,
-        y: offsetY + row * cellSize,
-        width: cellSize,
-        height: cellSize,
-      });
-    });
-
-    // Update grid lines only (clear and redraw)
-    gridLayer.destroyChildren();
+  // Memoize grid lines
+  const gridLines = useMemo(() => {
+    const { cols, rows, cellSize, offsetX, offsetY } = gridGeometry;
+    const lines: { points: number[]; key: string }[] = [];
 
     for (let i = 0; i <= cols; i++) {
-      const line = new Konva.Line({
+      lines.push({
         points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
-        stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        strokeWidth: 1,
+        key: `v-${i}`,
       });
-      gridLayer.add(line);
     }
     for (let i = 0; i <= rows; i++) {
-      const line = new Konva.Line({
+      lines.push({
         points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
-        stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        strokeWidth: 1,
+        key: `h-${i}`,
       });
-      gridLayer.add(line);
     }
+    return lines;
+  }, [gridGeometry]);
 
-    // Update labels
-    labelsLayer.destroyChildren();
+  // Memoize labels
+  const labels = useMemo(() => {
+    const { cols, rows, cellSize, offsetX, offsetY } = gridGeometry;
+    const labelItems: { text: string; x: number; y: number; key: string }[] = [];
 
-    // Column numbers (top)
     for (let col = 0; col < cols; col++) {
-      const text = new Konva.Text({
+      labelItems.push({
         text: String(col),
         x: offsetX + col * cellSize + cellSize / 2,
-        y: offsetY - labelHeight,
-        width: cellSize,
-        height: labelHeight,
-        align: 'center',
-        verticalAlign: 'middle',
-        fontSize: 10,
-        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+        y: offsetY - LABEL_HEIGHT,
+        key: `col-${col}`,
       });
-      labelsLayer.add(text);
     }
-
-    // Row numbers (left)
     for (let row = 0; row < rows; row++) {
-      const text = new Konva.Text({
+      labelItems.push({
         text: String(row),
-        x: offsetX - labelWidth,
+        x: offsetX - LABEL_WIDTH,
         y: offsetY + row * cellSize + cellSize / 2,
-        width: labelWidth,
-        height: cellSize,
-        align: 'center',
-        verticalAlign: 'middle',
-        fontSize: 10,
-        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
+        key: `row-${row}`,
       });
-      labelsLayer.add(text);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_zoom, panOffset]);
+    return labelItems;
+  }, [gridGeometry]);
 
-  // Rebuild highlight overlay when selectedCells or selectionStyle changes
-  useEffect(() => {
-    const layer = highlightLayerRef.current;
-    if (!layer) return;
-    layer.destroyChildren();
+  // Memoize cell data
+  const cells = useMemo(() => {
+    const { cols, rows, cellSize, offsetX, offsetY } = gridGeometry;
+    const cellData: {
+      row: number;
+      col: number;
+      fill: string | undefined;
+      key: string;
+      x: number;
+      y: number;
+    }[] = [];
 
-    const CANVAS_SIZE = 800;
-    const [cols, rows] = gridSize;
-    const cellSize = CANVAS_SIZE / Math.max(cols, rows);
-
-    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
-    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
-
-    const style = selectionStyle ?? 'outline';
-    (selectedCells ?? new Set()).forEach((key) => {
-      const [row, col] = key.split(',').map(Number);
-      const rect = new Konva.Rect({
-        x: offsetX + col * cellSize,
-        y: offsetY + row * cellSize,
-        width: cellSize,
-        height: cellSize,
-      });
-
-      if (style === 'outline') {
-        rect.setAttrs({
-          stroke: '#a5b4fc',
-          strokeWidth: 2.5,
-          shadowColor: 'rgba(165,180,252,0.5)',
-          shadowBlur: 6,
-          shadowEnabled: true,
-        });
-      } else if (style === 'overlay') {
-        rect.setAttrs({ fill: 'rgba(99,102,241,0.5)' });
-      } else {
-        rect.setAttrs({
-          stroke: '#ffffff',
-          strokeWidth: 2,
-          strokeScaleEnabled: false,
-        });
-      }
-
-      layer.add(rect);
-    });
-  }, [selectedCells, selectionStyle, gridSize, panOffset, _zoom]);
-
-  // Rebuild canvas when gridSize changes
-  useEffect(() => {
-    const cellsLayer = cellsLayerRef.current;
-    const gridLayer = gridLayerRef.current;
-    if (!cellsLayer || !gridLayer) return;
-
-    rebuildCanvas(gridData, gridSize);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridSize, gridData]);
-
-  function rebuildCanvas(data: number[][], size: [number, number]) {
-    const cellsLayer = cellsLayerRef.current!;
-    const gridLayer = gridLayerRef.current!;
-    const labelsLayer = labelsLayerRef.current!;
-
-    const CANVAS_SIZE = 800;
-    const [cols, rows] = size;
-
-    // Clear all existing cells and grid lines completely
-    cellsLayer.destroyChildren();
-    gridLayer.destroyChildren();
-    labelsLayer.destroyChildren();
-    cellRectsRef.current.clear();
-    prevGridSizeRef.current = [cols, rows];
-
-    const cellSize = CANVAS_SIZE / Math.max(cols, rows);
-    const labelWidth = 24;
-    const labelHeight = 16;
-
-    const offsetX = (CANVAS_SIZE - cellSize * cols) / 2 + panOffset.x;
-    const offsetY = (CANVAS_SIZE - cellSize * rows) / 2 + panOffset.y;
-
-    // Draw grid lines
-    for (let i = 0; i <= cols; i++) {
-      gridLayer.add(
-        new Konva.Line({
-          points: [offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + rows * cellSize],
-          stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-          strokeWidth: 1,
-        })
-      );
-    }
-    for (let i = 0; i <= rows; i++) {
-      gridLayer.add(
-        new Konva.Line({
-          points: [offsetX, offsetY + i * cellSize, offsetX + cols * cellSize, offsetY + i * cellSize],
-          stroke: isDarkRef.current ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-          strokeWidth: 1,
-        })
-      );
-    }
-
-    // Draw column numbers (top)
-    for (let col = 0; col < cols; col++) {
-      const text = new Konva.Text({
-        text: String(col),
-        x: offsetX + col * cellSize + cellSize / 2,
-        y: offsetY - labelHeight,
-        width: cellSize,
-        height: labelHeight,
-        align: 'center',
-        verticalAlign: 'middle',
-        fontSize: 10,
-        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-      });
-      labelsLayer.add(text);
-    }
-
-    // Draw row numbers (left)
-    for (let row = 0; row < rows; row++) {
-      const text = new Konva.Text({
-        text: String(row),
-        x: offsetX - labelWidth,
-        y: offsetY + row * cellSize + cellSize / 2,
-        width: labelWidth,
-        height: cellSize,
-        align: 'center',
-        verticalAlign: 'middle',
-        fontSize: 10,
-        fill: isDarkRef.current ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-      });
-      labelsLayer.add(text);
-    }
-
-    // Draw pixel cells
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
-        const key = `${row},${col}`;
-        const colorIndex = data[row]?.[col];
+        const colorIndex = gridData[row]?.[col];
         const fill =
           colorIndex === -1 || colorIndex === undefined
             ? undefined
             : '#' + PALETTE.colors[colorIndex];
 
-        const rect = new Konva.Rect({
-          stroke: 'rgba(0,0,0,0.2)',
-          strokeWidth: 0.5,
-          draggable: false,
+        cellData.push({
+          row,
+          col,
+          fill,
+          key: `${row},${col}`,
           x: offsetX + col * cellSize,
           y: offsetY + row * cellSize,
-          width: cellSize,
-          height: cellSize,
-          fill: fill || undefined,
-          onMouseDown: () => {
-            isDraggingRef.current = true;
-            onDragStart?.();
-            onCellClickRef.current(row, col);
-          },
-          onMouseUp: () => {
-            isDraggingRef.current = false;
-          },
-          onMouseMove: () => {
-            if (isDraggingRef.current) {
-              onCellDragRef.current?.(row, col);
-            }
-          },
         });
-
-        cellsLayer.add(rect);
-        cellRectsRef.current.set(key, rect);
       }
     }
-  }
+    return cellData;
+  }, [gridData, gridGeometry]);
+
+  // Memoize highlight rects
+  const highlightRects = useMemo(() => {
+    const { cellSize, offsetX, offsetY } = gridGeometry;
+    const style = selectionStyle ?? 'outline';
+    const rects: {
+      key: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      stroke?: string;
+      strokeWidth?: number;
+      fill?: string;
+      shadowColor?: string;
+      shadowBlur?: number;
+      shadowEnabled?: boolean;
+    }[] = [];
+
+    (selectedCells ?? new Set()).forEach((key) => {
+      const [row, col] = key.split(',').map(Number);
+      const rect: (typeof rects)[0] = {
+        key: `highlight-${key}`,
+        x: offsetX + col * cellSize,
+        y: offsetY + row * cellSize,
+        width: cellSize,
+        height: cellSize,
+      };
+
+      if (style === 'outline') {
+        rect.stroke = '#a5b4fc';
+        rect.strokeWidth = 2.5;
+        rect.shadowColor = 'rgba(165,180,252,0.5)';
+        rect.shadowBlur = 6;
+        rect.shadowEnabled = true;
+      } else if (style === 'overlay') {
+        rect.fill = 'rgba(99,102,241,0.5)';
+      } else {
+        rect.stroke = '#ffffff';
+        rect.strokeWidth = 2;
+      }
+
+      rects.push(rect);
+    });
+    return rects;
+  }, [selectedCells, selectionStyle, gridGeometry]);
+
+  // Event handlers
+  const handleCellMouseDown = (row: number, col: number) => {
+    isDraggingRef.current = true;
+    onDragStart?.();
+    onCellClickRef.current(row, col);
+  };
+
+  const handleCellMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleCellMouseMove = (row: number, col: number) => {
+    if (isDraggingRef.current) {
+      onCellDragRef.current?.(row, col);
+    }
+  };
+
+  const strokeColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  const labelColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 
   return (
     <div
       ref={containerRef}
       style={{
-        width: 800,
-        height: 800,
+        width: CANVAS_SIZE,
+        height: CANVAS_SIZE,
         cursor: 'crosshair',
         backgroundColor: isDark ? '#18181b' : '#f4f4f5',
       }}
     >
-      <Stage ref={stageRef} width={800} height={800}>
+      <Stage width={CANVAS_SIZE} height={CANVAS_SIZE}>
         {/* Cells layer - bottom */}
-        <Layer ref={cellsLayerRef}>
-          {/* cells rendered via useEffect */}
-        </Layer>
-
-        {/* Highlight layer - middle */}
-        <Layer ref={highlightLayerRef}>
-          {/* selections rendered via useEffect */}
+        <Layer>
+          {cells.map((cell) => (
+            <Rect
+              key={cell.key}
+              x={cell.x}
+              y={cell.y}
+              width={gridGeometry.cellSize}
+              height={gridGeometry.cellSize}
+              fill={cell.fill}
+              stroke="rgba(0,0,0,0.2)"
+              strokeWidth={0.5}
+              onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
+              onMouseUp={handleCellMouseUp}
+              onMouseMove={() => handleCellMouseMove(cell.row, cell.col)}
+            />
+          ))}
         </Layer>
 
         {/* Grid layer - non-interactive */}
-        <Layer ref={gridLayerRef}>
-          {/* grid lines rendered via useEffect */}
+        <Layer>
+          {gridLines.map((line) => (
+            <Line
+              key={line.key}
+              points={line.points}
+              stroke={strokeColor}
+              strokeWidth={1}
+            />
+          ))}
+        </Layer>
+
+        {/* Highlight layer */}
+        <Layer>
+          {highlightRects.map((rect) => (
+            <Rect
+              key={rect.key}
+              x={rect.x}
+              y={rect.y}
+              width={rect.width}
+              height={rect.height}
+              stroke={rect.stroke}
+              strokeWidth={rect.strokeWidth}
+              fill={rect.fill}
+              shadowColor={rect.shadowColor}
+              shadowBlur={rect.shadowBlur}
+              shadowEnabled={rect.shadowEnabled}
+            />
+          ))}
         </Layer>
 
         {/* Labels layer - topmost */}
-        <Layer ref={labelsLayerRef}>
-          {/* row/column labels rendered via useEffect */}
+        <Layer>
+          {labels.map((label) => (
+            <Text
+              key={label.key}
+              text={label.text}
+              x={label.x}
+              y={label.y}
+              width={label.key.startsWith('col-') ? gridGeometry.cellSize : LABEL_WIDTH}
+              height={LABEL_HEIGHT}
+              align="center"
+              verticalAlign="middle"
+              fontSize={10}
+              fill={labelColor}
+            />
+          ))}
         </Layer>
       </Stage>
     </div>
