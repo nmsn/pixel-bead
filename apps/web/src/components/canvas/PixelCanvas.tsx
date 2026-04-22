@@ -2,13 +2,15 @@ import { useEffect, useRef, useMemo } from 'react';
 import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { PALETTE } from '../../lib/palette-256';
 
-// Create checkerboard pattern image for transparent cells
-// Using a data URL to avoid canvas.toDataURL() issues in test environments
-const CHECKERBOARD_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAH0lEQVQ4T2NkYGD4z0ABYBw1YDQMRsNgNAyGbhgAAPE/APHyRqFYAAAAAElFTkSuQmCC';
+// Transparent fill for Konva Rect
+const TRANSPARENT_FILL = 'rgba(0,0,0,0)';
 
-function getCheckerboardImage(): HTMLImageElement {
+function createCheckerboardImage(): HTMLImageElement | null {
+  if (typeof document === 'undefined') return null;
+
   const img = new Image();
-  img.src = CHECKERBOARD_DATA_URL;
+  // 16x16 checkerboard PNG with white and #cccccc squares
+  img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYGD4z0ABYBw1YDQMRsNgNAyGbhgAAPE/APHyRqFYAAAAAElFTkSuQmCC';
   return img;
 }
 
@@ -53,6 +55,7 @@ export function PixelCanvas({
   const onCellClickRef = useRef(onCellClick);
   const onCellDragRef = useRef(onCellDrag);
   const isDarkRef = useRef(isDark);
+  const checkerboardPattern = useMemo(() => createCheckerboardImage(), []);
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -190,8 +193,10 @@ export function PixelCanvas({
         cellData.push({
           row,
           col,
-          fill: isTransparent ? undefined : '#' + PALETTE.colors[colorIndex],
-          fillPatternImage: isTransparent ? getCheckerboardImage() : undefined,
+          // Keep fill explicitly transparent for transparent cells.
+          // Konva's default fill is black when fill is omitted.
+          fill: isTransparent ? TRANSPARENT_FILL : '#' + PALETTE.colors[colorIndex],
+          fillPatternImage: isTransparent ? (checkerboardPattern ?? undefined) : undefined,
           key: `${row},${col}`,
           x: offsetX + col * cellSize,
           y: offsetY + row * cellSize,
@@ -199,7 +204,7 @@ export function PixelCanvas({
       }
     }
     return cellData;
-  }, [gridData, gridGeometry]);
+  }, [gridData, gridGeometry, checkerboardPattern]);
 
   // Memoize highlight rects
   const highlightRects = useMemo(() => {
@@ -289,6 +294,7 @@ export function PixelCanvas({
               height={gridGeometry.cellSize}
               fill={cell.fill}
               fillPatternImage={cell.fillPatternImage}
+              fillPatternRepeat={cell.fillPatternImage ? 'repeat' : undefined}
               stroke="rgba(0,0,0,0.2)"
               strokeWidth={0.5}
               onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
