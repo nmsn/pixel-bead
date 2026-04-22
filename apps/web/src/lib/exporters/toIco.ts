@@ -14,7 +14,7 @@ export function renderToCanvas(
   options: FrameOptions = {}
 ): string {
   const [cols, rows] = gridSize;
-  const { backgroundColor = '#ffffff', cornerRadius = 0, iconScale = 1 } = options;
+  const { backgroundColor, cornerRadius = 0, iconScale = 1 } = options;
 
   if (cols <= 0 || rows <= 0 || outputSize <= 0) {
     // Return empty canvas
@@ -29,14 +29,12 @@ export function renderToCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas.toDataURL('image/png');
 
-  // Draw rounded background
-  ctx.fillStyle = backgroundColor;
-  if (cornerRadius > 0) {
+  // Draw rounded background only when explicitly provided (transparent by default)
+  if (backgroundColor) {
+    ctx.fillStyle = backgroundColor;
     ctx.beginPath();
     ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
     ctx.fill();
-  } else {
-    ctx.fillRect(0, 0, outputSize, outputSize);
   }
 
   // Calculate icon size based on scale
