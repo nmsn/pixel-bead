@@ -287,7 +287,7 @@ export function PixelCanvas({
               y={cell.y}
               width={gridGeometry.cellSize}
               height={gridGeometry.cellSize}
-              fill={cell.fill || 'transparent'}
+              fill={cell.fill}
               fillPatternImage={cell.fillPatternImage}
               stroke="rgba(0,0,0,0.2)"
               strokeWidth={0.5}
