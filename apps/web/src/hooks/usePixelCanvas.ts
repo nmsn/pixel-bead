@@ -5,7 +5,7 @@ export interface PixelCanvasState {
   gridData: number[][];
   gridSize: [number, number];
   tool: Tool;
-  currentColorIndex: number;
+  currentColorIndex: number | null; // null = transparent, 0-255 = palette index
   zoom: number;
   selectedCells: Set<string>;
   selectionStyle: 'outline' | 'overlay' | 'inset';
@@ -20,7 +20,7 @@ export function usePixelCanvas() {
     gridData: [],
     gridSize: [32, 32],
     tool: 'pen',
-    currentColorIndex: 0,
+    currentColorIndex: null,
     zoom: 1,
     selectedCells: new Set<string>(),
     selectionStyle: 'outline',
@@ -49,7 +49,7 @@ export function usePixelCanvas() {
     setState((s) => ({ ...s, tool }));
   }, []);
 
-  const setCurrentColorIndex = useCallback((idx: number) => {
+  const setCurrentColorIndex = useCallback((idx: number | null) => {
     setState((s) => ({ ...s, currentColorIndex: idx }));
   }, []);
 
