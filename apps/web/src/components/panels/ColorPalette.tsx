@@ -75,17 +75,17 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
               title="Transparent"
             />
 
-            {/* Palette colors - shifted by 1 (transparent at 0, colors at 1-255) */}
+            {/* Palette colors - index 0-255 maps to grid position 1-256 */}
             {PALETTE.colors.map((color, index) => (
               <button
                 key={index}
                 className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
-                  currentColorIndex === index + 1
+                  currentColorIndex === index
                     ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
                     : ''
                 }`}
                 style={{ backgroundColor: '#' + color }}
-                onClick={() => onColorSelect(index + 1)}
+                onClick={() => onColorSelect(index)}
                 title={`#${color}`}
               />
             ))}
