@@ -51,7 +51,7 @@ describe('PixelCanvas', () => {
     expect(container).not.toBeNull();
   });
 
-  it('calls onCellClick when cell is clicked', async () => {
+  it('does not call onCellClick on initial render', async () => {
     const onCellClick = vi.fn();
     const mockGrid = Array(8).fill(null).map(() => Array(8).fill(-1));
 
