@@ -1,15 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
-import { Stage, Layer, Rect, Line, Text } from 'react-konva';
+import { Stage, Layer, Rect, Line, Text, Group } from 'react-konva';
 import { PALETTE } from '../../lib/palette-256';
-
-function createCheckerboardImage(): HTMLImageElement | null {
-  if (typeof document === 'undefined') return null;
-
-  const img = new Image();
-  // 16x16 checkerboard PNG with white and #cccccc squares
-  img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYGD4z0ABYBw1YDQMRsNgNAyGbhgAAPE/APHyRqFYAAAAAElFTkSuQmCC';
-  return img;
-}
 
 interface PixelCanvasProps {
   gridData: number[][];
@@ -18,7 +9,6 @@ interface PixelCanvasProps {
   panOffset: { x: number; y: number };
   onCellClick: (row: number, col: number) => void;
   onCellDrag?: (row: number, col: number) => void;
-  onDragStart?: () => void;
   onZoomChange?: (zoom: number) => void;
   onPanChange?: (panOffset: { x: number; y: number }) => void;
   selectedCells?: Set<string>;
@@ -29,6 +19,10 @@ interface PixelCanvasProps {
 const CANVAS_SIZE = 800;
 const LABEL_WIDTH = 24;
 const LABEL_HEIGHT = 16;
+const CHECKER_DARK = '#cccccc';
+const CHECKER_LIGHT = '#ffffff';
+const TRANSPARENT_FILL = 'rgba(0,0,0,0)';
+const CELL_STROKE = 'rgba(0,0,0,0.2)';
 
 export function PixelCanvas({
   gridData,
@@ -37,7 +31,6 @@ export function PixelCanvas({
   panOffset,
   onCellClick,
   onCellDrag,
-  onDragStart,
   onPanChange,
   selectedCells,
   selectionStyle,
@@ -52,7 +45,6 @@ export function PixelCanvas({
   const onCellClickRef = useRef(onCellClick);
   const onCellDragRef = useRef(onCellDrag);
   const isDarkRef = useRef(isDark);
-  const checkerboardPattern = useMemo(() => createCheckerboardImage(), []);
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -175,8 +167,8 @@ export function PixelCanvas({
     const cellData: {
       row: number;
       col: number;
+      isTransparent: boolean;
       fill?: string;
-      fillPatternImage?: HTMLImageElement;
       key: string;
       x: number;
       y: number;
@@ -191,7 +183,7 @@ export function PixelCanvas({
           cellData.push({
             row,
             col,
-            fillPatternImage: checkerboardPattern ?? undefined,
+            isTransparent: true,
             key: `${row},${col}`,
             x: offsetX + col * cellSize,
             y: offsetY + row * cellSize,
@@ -200,6 +192,7 @@ export function PixelCanvas({
           cellData.push({
             row,
             col,
+            isTransparent: false,
             fill: '#' + PALETTE.colors[colorIndex],
             key: `${row},${col}`,
             x: offsetX + col * cellSize,
@@ -209,7 +202,7 @@ export function PixelCanvas({
       }
     }
     return cellData;
-  }, [gridData, gridGeometry, checkerboardPattern]);
+  }, [gridData, gridGeometry]);
 
   // Memoize highlight rects
   const highlightRects = useMemo(() => {
@@ -260,7 +253,6 @@ export function PixelCanvas({
   // Event handlers
   const handleCellMouseDown = (row: number, col: number) => {
     isDraggingRef.current = true;
-    onDragStart?.();
     onCellClickRef.current(row, col);
   };
 
@@ -277,6 +269,30 @@ export function PixelCanvas({
   const strokeColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
   const labelColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 
+  const renderTransparentCell = (cell: (typeof cells)[number]) => {
+    const half = gridGeometry.cellSize / 2;
+    return (
+      <Group key={cell.key}>
+        <Rect x={cell.x} y={cell.y} width={half} height={half} fill={CHECKER_DARK} listening={false} />
+        <Rect x={cell.x + half} y={cell.y} width={half} height={half} fill={CHECKER_LIGHT} listening={false} />
+        <Rect x={cell.x} y={cell.y + half} width={half} height={half} fill={CHECKER_LIGHT} listening={false} />
+        <Rect x={cell.x + half} y={cell.y + half} width={half} height={half} fill={CHECKER_DARK} listening={false} />
+        <Rect
+          x={cell.x}
+          y={cell.y}
+          width={gridGeometry.cellSize}
+          height={gridGeometry.cellSize}
+          fill={TRANSPARENT_FILL}
+          stroke={CELL_STROKE}
+          strokeWidth={0.5}
+          onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
+          onMouseUp={handleCellMouseUp}
+          onMouseMove={() => handleCellMouseMove(cell.row, cell.col)}
+        />
+      </Group>
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -291,21 +307,21 @@ export function PixelCanvas({
         {/* Cells layer - bottom */}
         <Layer>
           {cells.map((cell) => (
-            <Rect
-              key={cell.key}
-              x={cell.x}
-              y={cell.y}
-              width={gridGeometry.cellSize}
-              height={gridGeometry.cellSize}
-              fill={cell.fill}
-              fillPatternImage={cell.fillPatternImage}
-              fillPatternRepeat={cell.fillPatternImage ? 'repeat' : undefined}
-              stroke="rgba(0,0,0,0.2)"
-              strokeWidth={0.5}
-              onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
-              onMouseUp={handleCellMouseUp}
-              onMouseMove={() => handleCellMouseMove(cell.row, cell.col)}
-            />
+            cell.isTransparent ? renderTransparentCell(cell) : (
+              <Rect
+                key={cell.key}
+                x={cell.x}
+                y={cell.y}
+                width={gridGeometry.cellSize}
+                height={gridGeometry.cellSize}
+                fill={cell.fill}
+                stroke={CELL_STROKE}
+                strokeWidth={0.5}
+                onMouseDown={() => handleCellMouseDown(cell.row, cell.col)}
+                onMouseUp={handleCellMouseUp}
+                onMouseMove={() => handleCellMouseMove(cell.row, cell.col)}
+              />
+            )
           ))}
         </Layer>
 

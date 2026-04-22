@@ -28,7 +28,6 @@ export function App() {
   const historyRef = useRef({ push, undo, redo, reset, canUndo, canRedo });
   historyRef.current = { push, undo, redo, reset, canUndo, canRedo };
 
-  const [isDragging, setIsDragging] = useState(false);
   const sourceImageRef = useRef<ImageData | null>(null);
   const lastPushedRef = useRef<string>('');
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -350,7 +349,6 @@ export function App() {
             zoom={state.zoom}
             onCellClick={handleCellClick}
             onCellDrag={handleCellDrag}
-            onDragStart={() => setIsDragging(true)}
             panOffset={panOffset}
             onPanChange={setPanOffset}
             onZoomChange={setZoom}

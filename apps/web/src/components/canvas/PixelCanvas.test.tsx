@@ -5,7 +5,7 @@ import { PixelCanvas } from './PixelCanvas';
 
 // Mock react-konva to track Rect elements with their event handlers and fill props
 const rectEventHandlers: Map<number, { onMouseDown?: () => void }> = new Map();
-const rectProps: Map<number, { fill?: string; fillPatternImage?: unknown }> = new Map();
+const rectProps: Map<number, { fill?: string }> = new Map();
 let rectIdCounter = 0;
 
 // Mock react-konva before import
@@ -16,22 +16,20 @@ vi.mock('react-konva', () => {
     width?: number;
     height?: number;
     fill?: string;
-    fillPatternImage?: unknown;
     stroke?: string;
     strokeWidth?: number;
     onMouseDown?: () => void;
     onMouseUp?: () => void;
     onMouseMove?: () => void;
-  }> = ({ onMouseDown, onMouseUp, onMouseMove, fill, fillPatternImage, ...props }) => {
+  }> = ({ onMouseDown, onMouseUp, onMouseMove, fill, ...props }) => {
     const id = rectIdCounter++;
     if (onMouseDown) rectEventHandlers.set(id, { onMouseDown });
-    rectProps.set(id, { fill, fillPatternImage });
+    rectProps.set(id, { fill });
     return (
       <div
         data-rect-id={id}
         data-testid={`cell-rect-${id}`}
         data-fill={fill}
-        data-has-pattern={fillPatternImage ? 'true' : 'false'}
         {...props}
       />
     );
@@ -50,6 +48,7 @@ vi.mock('react-konva', () => {
   }) => {
     return <div className="layer-mock">{children}</div>;
   };
+  const MockGroup: React.FC<{ children: React.ReactNode }> = ({ children }) => <div>{children}</div>;
 
   const MockStage: React.FC<{
     children: React.ReactNode;
@@ -62,6 +61,7 @@ vi.mock('react-konva', () => {
   return {
     Stage: MockStage,
     Layer: MockLayer,
+    Group: MockGroup,
     Rect: MockRect,
     Line: MockLine,
     Text: MockText,
@@ -134,10 +134,10 @@ describe('PixelCanvas', () => {
     // Verify onCellClick was not called before any interaction
     expect(onCellClick).not.toHaveBeenCalled();
 
-    // Simulate clicking on the first cell rect
-    const firstRect = cellRects[0];
-    const rectId = parseInt(firstRect.getAttribute('data-rect-id') || '0', 10);
-    const handlers = rectEventHandlers.get(rectId);
+    // Simulate clicking one interactive rect (transparent checker sub-rects are non-interactive)
+    const interactiveRectId = rectEventHandlers.keys().next().value as number | undefined;
+    expect(interactiveRectId).toBeDefined();
+    const handlers = rectEventHandlers.get(interactiveRectId!);
 
     // The Rect should have an onMouseDown handler
     expect(handlers?.onMouseDown).toBeDefined();
@@ -163,10 +163,11 @@ describe('PixelCanvas', () => {
       />
     );
 
-    const firstRect = document.querySelector('[data-rect-id]');
-    expect(firstRect).toBeTruthy();
-    // Transparent cells don't have fill attribute, only fillPatternImage
-    expect(firstRect?.getAttribute('data-fill')).toBeNull();
-    expect(firstRect?.getAttribute('data-has-pattern')).toBe('true');
+    const allRects = Array.from(document.querySelectorAll('[data-rect-id]'));
+    expect(allRects.length).toBeGreaterThan(0);
+    const fills = allRects.map((rect) => rect.getAttribute('data-fill'));
+    expect(fills).toContain('#cccccc');
+    expect(fills).toContain('#ffffff');
+    expect(fills).toContain('rgba(0,0,0,0)');
   });
 });
