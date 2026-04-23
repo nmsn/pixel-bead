@@ -15,6 +15,7 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [selectedSize, setSelectedSize] = useState<[number, number]>([64, 64]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageDataRef, setImageDataRef] = useState<ImageData | null>(null);
 
@@ -51,8 +52,24 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
         <div className="p-4">
           {/* Upload zone */}
           <div
-            className="border-2 border-dashed border-[var(--color-border)] rounded-lg p-8 text-center cursor-pointer hover:border-[#6366f1] hover:bg-[#6366f1]/5"
+            className={`border-2 border-dashed border-[var(--color-border)] rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragging
+                ? 'border-[#6366f1] bg-[#6366f1]/10'
+                : 'hover:border-[#6366f1] hover:bg-[#6366f1]/5'
+            }`}
             onClick={() => fileInputRef.current?.click()}
+            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+              const file = e.dataTransfer.files[0];
+              if (file && file.type.startsWith('image/')) {
+                handleFileSelect(file);
+              }
+            }}
           >
             {preview ? (
               <img src={preview} alt="Preview" className="max-w-full max-h-[180px] rounded-lg border border-[var(--color-border)]" />

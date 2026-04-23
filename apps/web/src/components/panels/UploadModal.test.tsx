@@ -117,4 +117,75 @@ describe('UploadModal', () => {
     const convertButton = screen.getByRole('button', { name: /转换为像素画布/ });
     expect(convertButton).toBeDisabled();
   });
+
+  it('accepts file via drag and drop', async () => {
+    const { imageFileToImageData } = await import('../../lib/pixelate');
+    vi.mocked(imageFileToImageData).mockResolvedValue({
+      width: 100,
+      height: 100,
+      data: new Uint8ClampedArray(100 * 100 * 4),
+    } as ImageData);
+
+    render(
+      <UploadModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onUpload={mockOnUpload}
+      />
+    );
+
+    const uploadZone = screen.getByText(/拖拽图片到此处/).closest('div');
+
+    // Create mock file
+    const file = new File(['dummy'], 'test.png', { type: 'image/png' });
+
+    // Create a proper DataTransfer object
+    const dataTransfer = {
+      files: [file],
+      setData: vi.fn(),
+      getData: vi.fn(),
+      effectAllowed: 'all' as const,
+    };
+
+    // Fire drop event on the upload zone
+    fireEvent.drop(uploadZone!, { dataTransfer });
+
+    // Preview image should appear
+    await vi.waitFor(() => {
+      expect(screen.getByRole('img')).toBeInTheDocument();
+    });
+  });
+
+  it('shows highlighted border when dragging over', async () => {
+    render(
+      <UploadModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onUpload={mockOnUpload}
+      />
+    );
+
+    // Get the upload zone div (the one with onDragEnter handlers)
+    const uploadZone = document.querySelector('input[type="file"]')!.previousElementSibling as HTMLElement;
+
+    // Create a proper DataTransfer object for dragover
+    const dataTransfer = {
+      files: [],
+      setData: vi.fn(),
+      getData: vi.fn(),
+      effectAllowed: 'all' as const,
+    };
+
+    // Fire dragenter
+    fireEvent.dragEnter(uploadZone, { dataTransfer });
+
+    // The upload zone should have the dragging class (bg-accent/10)
+    expect(uploadZone.className).toContain('bg-[#6366f1]/10');
+
+    // Fire dragleave
+    fireEvent.dragLeave(uploadZone, { dataTransfer });
+
+    // After drag leave, it should no longer have the dragging class
+    expect(uploadZone.className).not.toContain('bg-[#6366f1]/10');
+  });
 });
