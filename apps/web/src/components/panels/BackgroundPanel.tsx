@@ -314,9 +314,11 @@ export function BackgroundPanel({
 
                     {/* Pointer line */}
                     <div
-                      className="absolute left-1/2 top-1/2 w-[28px] h-0.5 bg-primary origin-left"
+                      className="absolute w-[28px] h-0.5 bg-primary"
                       style={{
-                        transform: `translateY(-50%) rotate(${gradientAngle}deg)`
+                        left: '50%',
+                        top: '50%',
+                        transform: `translate(-50%, -50%) rotate(${gradientAngle}deg)`
                       }}
                     />
                   </div>
