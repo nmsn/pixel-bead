@@ -95,3 +95,5 @@ document.createElement = ((tagName: string) => {
   }
   return origCreateElement(tagName);
 }) as typeof document.createElement;
+
+import '@testing-library/jest-dom';
