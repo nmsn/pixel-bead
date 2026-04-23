@@ -4,6 +4,10 @@ export interface FrameOptions {
   backgroundColor?: string;
   cornerRadius?: number;
   iconScale?: number;
+  gradientColors?: string[];
+  gradientAngle?: number;
+  glossEnabled?: boolean;
+  glossIntensity?: number;
 }
 
 // renderToCanvas is exported so toIcns.ts can reuse it
@@ -14,7 +18,15 @@ export function renderToCanvas(
   options: FrameOptions = {}
 ): string {
   const [cols, rows] = gridSize;
-  const { backgroundColor, cornerRadius = 0, iconScale = 1 } = options;
+  const {
+    backgroundColor,
+    cornerRadius = 0,
+    iconScale = 1,
+    gradientColors,
+    gradientAngle = 0,
+    glossEnabled = false,
+    glossIntensity = 0,
+  } = options;
 
   if (cols <= 0 || rows <= 0 || outputSize <= 0) {
     // Return empty canvas
@@ -30,8 +42,38 @@ export function renderToCanvas(
   if (!ctx) return canvas.toDataURL('image/png');
 
   // Draw rounded background only when explicitly provided (transparent by default)
-  if (backgroundColor) {
+  if (backgroundColor && !gradientColors) {
     ctx.fillStyle = backgroundColor;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.fill();
+  }
+
+  // Add gradient background if gradientColors is provided
+  if (gradientColors && gradientColors.length >= 2) {
+    const angleRad = (gradientAngle - 90) * Math.PI / 180;
+    const cx = outputSize / 2;
+    const cy = outputSize / 2;
+    const x1 = cx - Math.cos(angleRad) * outputSize / 2;
+    const y1 = cy - Math.sin(angleRad) * outputSize / 2;
+    const x2 = cx + Math.cos(angleRad) * outputSize / 2;
+    const y2 = cy + Math.sin(angleRad) * outputSize / 2;
+    const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+    gradientColors.forEach((color, i) => {
+      gradient.addColorStop(i / (gradientColors.length - 1), color);
+    });
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.fill();
+  }
+
+  // Add gloss effect if enabled
+  if (glossEnabled && glossIntensity > 0) {
+    const glossGradient = ctx.createLinearGradient(0, 0, 0, outputSize / 2);
+    glossGradient.addColorStop(0, `rgba(255,255,255,${glossIntensity / 100})`);
+    glossGradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glossGradient;
     ctx.beginPath();
     ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
     ctx.fill();
