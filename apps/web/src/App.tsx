@@ -21,7 +21,8 @@ function createEmptyGrid(size: [number, number]): number[][] {
 export function App() {
   const { state, setGridData, setGridSize, setTool, setCurrentColorIndex, setZoom, updateCell, floodFill,
   toggleCellSelection, addToSelection, selectAllByColor, clearSelection, applyColorToSelection, setSelectionStyle,
-  backgroundColor, cornerRadius, iconScale, isDark, setBackgroundColor, setCornerRadius, setIconScale, setIsDark } =
+  backgroundColor, cornerRadius, iconScale, isDark, setBackgroundColor, setCornerRadius, setIconScale, setIsDark,
+  backgroundType, gradientColors, gradientAngle, glossEnabled, glossIntensity, setBackgroundType, setGradientColors, setGradientAngle, setGlossEnabled, setGlossIntensity } =
     usePixelCanvas();
 
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
@@ -235,24 +236,36 @@ export function App() {
       backgroundColor,
       cornerRadius,
       iconScale,
+      gradientColors,
+      gradientAngle,
+      glossEnabled,
+      glossIntensity,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale, gradientColors, gradientAngle, glossEnabled, glossIntensity]
   );
   const handleExportIco = useCallback(
     () => exportToIco(state.gridData, state.gridSize, {
       backgroundColor,
       cornerRadius,
       iconScale,
+      gradientColors,
+      gradientAngle,
+      glossEnabled,
+      glossIntensity,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale, gradientColors, gradientAngle, glossEnabled, glossIntensity]
   );
   const handleExportIcns = useCallback(
     () => exportToIcns(state.gridData, state.gridSize, {
       backgroundColor,
       cornerRadius,
       iconScale,
+      gradientColors,
+      gradientAngle,
+      glossEnabled,
+      glossIntensity,
     }),
-    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale]
+    [state.gridData, state.gridSize, backgroundColor, cornerRadius, iconScale, gradientColors, gradientAngle, glossEnabled, glossIntensity]
   );
 
   // Upload zone overlay
@@ -400,6 +413,13 @@ export function App() {
           <ExportPanel
             gridData={state.gridData}
             gridSize={state.gridSize}
+            backgroundType={backgroundType}
+            backgroundColor={backgroundColor}
+            gradientColors={gradientColors}
+            gradientAngle={gradientAngle}
+            glossEnabled={glossEnabled}
+            glossIntensity={glossIntensity}
+            cornerRadius={cornerRadius}
             onExportPng={handleExportPng}
             onExportIco={handleExportIco}
             onExportIcns={handleExportIcns}
