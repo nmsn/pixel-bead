@@ -10,9 +10,14 @@ export interface PixelCanvasState {
   selectedCells: Set<string>;
   selectionStyle: 'outline' | 'overlay' | 'inset';
   backgroundColor: string;
+  backgroundType: 'solid' | 'gradient';
+  gradientColors: string[];
+  gradientAngle: number;
   cornerRadius: number;
   iconScale: number;
   isDark: boolean;
+  glossEnabled: boolean;
+  glossIntensity: number;
 }
 
 export function usePixelCanvas() {
@@ -25,9 +30,14 @@ export function usePixelCanvas() {
     selectedCells: new Set<string>(),
     selectionStyle: 'outline',
     backgroundColor: '#ffffff',
+    backgroundType: 'solid',
+    gradientColors: ['#667eea', '#764ba2'],
+    gradientAngle: 135,
     cornerRadius: 0,
     iconScale: 1,
     isDark: true,
+    glossEnabled: true,
+    glossIntensity: 40,
   });
 
   const setGridData = useCallback((data: number[][]) => {
@@ -147,6 +157,18 @@ export function usePixelCanvas() {
     setState((s) => ({ ...s, backgroundColor: color }));
   }, []);
 
+  const setBackgroundType = useCallback((type: 'solid' | 'gradient') => {
+    setState((s) => ({ ...s, backgroundType: type }));
+  }, []);
+
+  const setGradientColors = useCallback((colors: string[]) => {
+    setState((s) => ({ ...s, gradientColors: colors }));
+  }, []);
+
+  const setGradientAngle = useCallback((angle: number) => {
+    setState((s) => ({ ...s, gradientAngle: angle }));
+  }, []);
+
   const setCornerRadius = useCallback((radius: number) => {
     setState((s) => ({ ...s, cornerRadius: radius }));
   }, []);
@@ -157,6 +179,14 @@ export function usePixelCanvas() {
 
   const setIsDark = useCallback((isDark: boolean) => {
     setState((s) => ({ ...s, isDark }));
+  }, []);
+
+  const setGlossEnabled = useCallback((enabled: boolean) => {
+    setState((s) => ({ ...s, glossEnabled: enabled }));
+  }, []);
+
+  const setGlossIntensity = useCallback((intensity: number) => {
+    setState((s) => ({ ...s, glossIntensity: intensity }));
   }, []);
 
   return {
@@ -175,12 +205,22 @@ export function usePixelCanvas() {
     applyColorToSelection,
     setSelectionStyle,
     backgroundColor: state.backgroundColor,
+    backgroundType: state.backgroundType,
+    gradientColors: state.gradientColors,
+    gradientAngle: state.gradientAngle,
     cornerRadius: state.cornerRadius,
     iconScale: state.iconScale,
     isDark: state.isDark,
+    glossEnabled: state.glossEnabled,
+    glossIntensity: state.glossIntensity,
     setBackgroundColor,
+    setBackgroundType,
+    setGradientColors,
+    setGradientAngle,
     setCornerRadius,
     setIconScale,
     setIsDark,
+    setGlossEnabled,
+    setGlossIntensity,
   };
 }

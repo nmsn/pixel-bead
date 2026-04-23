@@ -16,6 +16,7 @@ class MockImageData implements ImageData {
 class MockCanvasRenderingContext2D {
   fillStyle = '';
   strokeStyle = '';
+  lineWidth = 1;
   private imageData: Uint8ClampedArray | null = null;
   private canvasWidth: number;
   private canvasHeight: number;
@@ -50,6 +51,24 @@ class MockCanvasRenderingContext2D {
     return new MockImageData(this.imageData, this.canvasWidth);
   }
 
+  createLinearGradient(x1: number, y1: number, x2: number, y2: number) {
+    // Return a mock gradient object
+    const colors: string[] = [];
+    return {
+      addColorStop: (offset: number, color: string) => {
+        colors.push(color);
+      }
+    };
+  }
+
+  beginPath() {}
+  closePath() {}
+  moveTo(_x: number, _y: number) {}
+  lineTo(_x: number, _y: number) {}
+  stroke() {}
+  fill(_fillRule?: CanvasFillRule) {}
+  roundRect(_x: number, _y: number, _w: number, _h: number, _r: number | number[]) {}
+
   private parseColor(color: string): { r: number; g: number; b: number } {
     if (color === 'red') return { r: 255, g: 0, b: 0 };
     if (color === 'blue') return { r: 0, g: 0, b: 255 };
@@ -68,32 +87,16 @@ class MockCanvasRenderingContext2D {
   }
 }
 
-class MockCanvas {
-  width = 100;
-  height = 100;
-  private ctx: MockCanvasRenderingContext2D;
+// Store original getContext
+const origGetContext = HTMLCanvasElement.prototype.getContext;
 
-  constructor(width = 100, height = 100) {
-    this.width = width;
-    this.height = height;
-    this.ctx = new MockCanvasRenderingContext2D(width, height);
+// Override getContext to return mock context for '2d'
+HTMLCanvasElement.prototype.getContext = function(type: string) {
+  if (type === '2d') {
+    const ctx = new MockCanvasRenderingContext2D(this.width || 100, this.height || 100);
+    return ctx as unknown as CanvasRenderingContext2D;
   }
-
-  getContext(type: string) {
-    if (type === '2d') return this.ctx;
-    return null;
-  }
-}
-
-// Store original createElement
-const origCreateElement = document.createElement.bind(document);
-
-// Override document.createElement for canvas
-document.createElement = ((tagName: string) => {
-  if (tagName.toLowerCase() === 'canvas') {
-    return new MockCanvas() as unknown as HTMLCanvasElement;
-  }
-  return origCreateElement(tagName);
-}) as typeof document.createElement;
+  return origGetContext.call(this, type);
+};
 
 import '@testing-library/jest-dom';
