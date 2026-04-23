@@ -9,6 +9,7 @@ interface TopToolbarProps {
   onToolChange: (tool: Tool) => void;
   gridSize: [number, number];
   onGridSizeChange: (size: [number, number]) => void;
+  onUpload: () => void;
   onExport: () => void;
   onReset: () => void;
   isDark: boolean;
@@ -36,6 +37,7 @@ export function TopToolbar({
   onToolChange,
   gridSize,
   onGridSizeChange,
+  onUpload,
   onExport,
   onReset,
   isDark,
@@ -120,6 +122,14 @@ export function TopToolbar({
         title="Reset canvas"
       >
         ↺
+      </button>
+
+      {/* Upload */}
+      <button
+        className="h-8 px-4 rounded bg-[#6366f1] text-white text-sm font-medium hover:bg-[#4f46e5] transition-colors"
+        onClick={onUpload}
+      >
+        上传图片
       </button>
 
       {/* Export */}

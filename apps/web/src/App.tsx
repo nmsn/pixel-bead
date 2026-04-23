@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { PixelCanvas } from './components/canvas/PixelCanvas';
 import { TopToolbar } from './components/toolbar/TopToolbar';
+import { StepNav } from './components/StepNav';
 import { ExportPanel } from './components/panels/ExportPanel';
 import { ColorPalette } from './components/panels/ColorPalette';
 import { SelectionPanel } from './components/panels/SelectionPanel';
-import { FramePanel } from './components/panels/FramePanel';
+import { BackgroundPanel } from './components/panels/BackgroundPanel';
+import { UploadModal } from './components/panels/UploadModal';
 import { usePixelCanvas } from './hooks/usePixelCanvas';
 import { useHistory } from './hooks/useHistory';
+import { useStepNavigation } from './hooks/useStepNavigation';
 import { imageFileToImageData, pixelateImage } from './lib/pixelate';
 import { exportToPng, exportToIco } from './lib/exporters/toIco';
 import { exportToIcns } from './lib/exporters/toIcns';
@@ -28,6 +31,9 @@ export function App() {
   const { push, undo, redo, reset, canUndo, canRedo } = useHistory<number[][]>(createEmptyGrid([32, 32]));
   const historyRef = useRef({ push, undo, redo, reset, canUndo, canRedo });
   historyRef.current = { push, undo, redo, reset, canUndo, canRedo };
+
+  const { currentStep, completedSteps, goToStep, markStepCompleted } = useStepNavigation();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const sourceImageRef = useRef<ImageData | null>(null);
   const lastPushedRef = useRef<string>('');
@@ -308,7 +314,10 @@ export function App() {
           localStorage.setItem('pixel-bead-is-dark', JSON.stringify(newIsDark));
           document.documentElement.classList.toggle('dark', newIsDark);
         }}
+        onUpload={() => setIsUploadModalOpen(true)}
       />
+
+      <StepNav currentStep={currentStep} onStepChange={goToStep} completedSteps={completedSteps} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas area */}
@@ -400,16 +409,26 @@ export function App() {
               onClearSelection={clearSelection}
             />
           )}
-          <FramePanel
-            backgroundColor={backgroundColor}
-            cornerRadius={cornerRadius}
-            iconScale={iconScale}
-            gridSize={state.gridSize}
-            gridData={state.gridData}
-            onBackgroundColorChange={setBackgroundColor}
-            onCornerRadiusChange={setCornerRadius}
-            onIconScaleChange={setIconScale}
-          />
+          {currentStep === 3 && (
+            <BackgroundPanel
+              backgroundType={backgroundType}
+              onBackgroundTypeChange={setBackgroundType}
+              backgroundColor={backgroundColor}
+              onBackgroundColorChange={setBackgroundColor}
+              gradientColors={gradientColors}
+              onGradientColorsChange={setGradientColors}
+              gradientAngle={gradientAngle}
+              onGradientAngleChange={setGradientAngle}
+              cornerRadius={cornerRadius}
+              onCornerRadiusChange={setCornerRadius}
+              glossEnabled={glossEnabled}
+              onGlossEnabledChange={setGlossEnabled}
+              glossIntensity={glossIntensity}
+              onGlossIntensityChange={setGlossIntensity}
+              gridData={state.gridData}
+              gridSize={state.gridSize}
+            />
+          )}
           <ExportPanel
             gridData={state.gridData}
             gridSize={state.gridSize}
@@ -430,6 +449,17 @@ export function App() {
           />
         </div>
       </div>
+
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={(gridData, gridSize) => {
+          setGridData(gridData);
+          setGridSize(gridSize);
+          markStepCompleted(1);
+          goToStep(2);
+        }}
+      />
     </div>
   );
 }
