@@ -56,6 +56,13 @@ export function App() {
         setGridData(parsed.gridData);
         setGridSize(parsed.gridSize);
         if (parsed.selectionStyle) setSelectionStyle(parsed.selectionStyle);
+        if (parsed.backgroundColor) setBackgroundColor(parsed.backgroundColor);
+        if (parsed.backgroundType) setBackgroundType(parsed.backgroundType);
+        if (parsed.gradientColors) setGradientColors(parsed.gradientColors);
+        if (parsed.gradientAngle !== undefined) setGradientAngle(parsed.gradientAngle);
+        if (parsed.cornerRadius !== undefined) setCornerRadius(parsed.cornerRadius);
+        if (parsed.glossEnabled !== undefined) setGlossEnabled(parsed.glossEnabled);
+        if (parsed.glossIntensity !== undefined) setGlossIntensity(parsed.glossIntensity);
         push(parsed.gridData, true);
       } catch {
         // ignore
@@ -81,11 +88,18 @@ export function App() {
           gridData: state.gridData,
           gridSize: state.gridSize,
           selectionStyle: state.selectionStyle,
+          backgroundColor,
+          backgroundType,
+          gradientColors,
+          gradientAngle,
+          cornerRadius,
+          glossEnabled,
+          glossIntensity,
           lastModified: Date.now(),
         })
       );
     }
-  }, [state.gridData, state.gridSize, state.selectionStyle]);
+  }, [state.gridData, state.gridSize, state.selectionStyle, backgroundColor, backgroundType, gradientColors, gradientAngle, cornerRadius, glossEnabled, glossIntensity]);
 
   // Handle reset
   const handleReset = useCallback(() => {
@@ -146,8 +160,6 @@ export function App() {
           }
           break;
         case 'bucket':
-          // When currentColorIndex is null (transparent), bucket fill is a no-op
-          if (currentColorIndex === null) return;
           floodFill(row, col, currentColorIndex);
           return;
         case 'eyedropper':

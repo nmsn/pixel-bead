@@ -75,14 +75,15 @@ export function usePixelCanvas() {
     });
   }, []);
 
-  const floodFill = useCallback((row: number, col: number, newColor: number) => {
+  const floodFill = useCallback((row: number, col: number, newColor: number | null) => {
     setState((s) => {
       if (row < 0 || row >= s.gridData.length || col < 0 || col >= s.gridData[0]?.length) {
         return s;
       }
       const data = s.gridData.map((r) => [...r]);
+      const fillColor = newColor === null ? -1 : newColor;
       const targetColor = data[row][col];
-      if (targetColor === newColor) return s;
+      if (targetColor === fillColor) return s;
 
       const queue: [number, number][] = [[row, col]];
       const visited = new Set<string>();
@@ -95,7 +96,7 @@ export function usePixelCanvas() {
         if (data[r][c] !== targetColor) continue;
 
         visited.add(key);
-        data[r][c] = newColor;
+        data[r][c] = fillColor;
 
         queue.push([r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]);
       }

@@ -1,6 +1,7 @@
-import { Layer, Rect, Stage } from 'react-konva';
-import { useCallback, useState } from 'react';
+import { Group, Layer, Rect, Stage } from 'react-konva';
+import { useCallback, useRef, useState } from 'react';
 import { PALETTE } from '../../lib/palette-256';
+import Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 
 export interface KonvaPreviewProps {
@@ -18,6 +19,8 @@ export interface KonvaPreviewProps {
 }
 
 const INITIAL_SCALE = 1;
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 10;
 
 function getGradientStops(colors: string[]): number[] {
   const stops: number[] = [];
@@ -44,6 +47,8 @@ export function KonvaPreview({
   width,
   height,
 }: KonvaPreviewProps) {
+  const stageRef = useRef<Konva.Stage>(null);
+  const groupRef = useRef<Konva.Group>(null);
   const [scale, setScale] = useState(INITIAL_SCALE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -51,7 +56,7 @@ export function KonvaPreview({
     (e: KonvaEventObject<WheelEvent>) => {
       e.evt.preventDefault();
 
-      const stage = e.target.getStage();
+      const stage = stageRef.current;
       if (!stage) return;
 
       const oldScale = scale;
@@ -61,9 +66,7 @@ export function KonvaPreview({
       const direction = e.evt.deltaY > 0 ? -1 : 1;
       const scaleBy = 1.1;
       const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-      // Clamp scale to reasonable bounds
-      const clampedScale = Math.max(0.1, Math.min(10, newScale));
+      const clampedScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
       // Calculate new position to zoom toward mouse position
       const mousePointTo = {
@@ -82,16 +85,14 @@ export function KonvaPreview({
     [scale, position]
   );
 
-  const handleDragMove = useCallback(
-    (e: KonvaEventObject<DragEvent>) => {
-      const stage = e.target;
-      setPosition({
-        x: stage.x(),
-        y: stage.y(),
-      });
-    },
-    []
-  );
+  const handleContentDragMove = useCallback(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    setPosition({
+      x: group.x(),
+      y: group.y(),
+    });
+  }, []);
 
   const handleDoubleClick = useCallback(() => {
     setScale(INITIAL_SCALE);
@@ -123,16 +124,11 @@ export function KonvaPreview({
   return (
     <div style={{ width, height }}>
       <Stage
+        ref={stageRef}
         width={width}
         height={height}
-        draggable
         onWheel={handleWheel}
-        onDragMove={handleDragMove}
         onDblClick={handleDoubleClick}
-        scaleX={scale}
-        scaleY={scale}
-        x={position.x}
-        y={position.y}
       >
         {/* Background Layer */}
         <Layer>
@@ -162,29 +158,39 @@ export function KonvaPreview({
           )}
         </Layer>
 
-        {/* Pixel Layer */}
-        <Layer listening={false}>
-          {gridData.map((row, rowIndex) =>
-            row.map((colorIndex, colIndex) => {
-              // Skip transparent cells
-              if (colorIndex === -1) return null;
+        {/* Pixel Layer (draggable / scalable content only) */}
+        <Layer>
+          <Group
+            ref={groupRef}
+            x={position.x}
+            y={position.y}
+            scaleX={scale}
+            scaleY={scale}
+            draggable
+            onDragMove={handleContentDragMove}
+          >
+            {gridData.map((row, rowIndex) =>
+              row.map((colorIndex, colIndex) => {
+                // Keep transparent pixels empty so background shows through
+                if (colorIndex === -1) return null;
 
-              const color = PALETTE.colors[colorIndex];
-              if (!color) return null;
+                const color = PALETTE.colors[colorIndex];
+                if (!color) return null;
 
-              return (
-                <Rect
-                  key={`${rowIndex}-${colIndex}`}
-                  x={colIndex * cellWidth}
-                  y={rowIndex * cellHeight}
-                  width={cellWidth}
-                  height={cellHeight}
-                  fill={`#${color}`}
-                  listening={false}
-                />
-              );
-            })
-          )}
+                return (
+                  <Rect
+                    key={`${rowIndex}-${colIndex}`}
+                    x={colIndex * cellWidth}
+                    y={rowIndex * cellHeight}
+                    width={cellWidth}
+                    height={cellHeight}
+                    fill={`#${color}`}
+                    listening={false}
+                  />
+                );
+              })
+            )}
+          </Group>
         </Layer>
 
         {/* Gloss Overlay Layer */}
