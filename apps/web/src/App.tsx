@@ -292,7 +292,7 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0b]">
+    <div className="flex flex-col h-screen bg-[var(--color-bg)]">
       <TopToolbar
         canUndo={canUndo}
         canRedo={canRedo}
@@ -363,14 +363,14 @@ export function App() {
               {state.gridData.length === 0 && (
                 <div
                   className={`absolute inset-0 flex items-center justify-center z-10 ${
-                    isDragOver ? 'bg-[#6366f1]/20 border-2 border-[#6366f1]' : ''
+                    isDragOver ? 'bg-[var(--color-accent)]/20 border-2 border-[var(--color-accent)]' : ''
                   }`}
                 >
                   <div className="text-center">
                     <div className="text-4xl mb-4 text-[#71717a]">+</div>
                     <div className="text-[#71717a] text-sm">Drop image or click to upload</div>
                     <button
-                      className="mt-4 px-4 py-2 bg-[#6366f1] text-white rounded text-sm"
+                      className="mt-4 px-4 py-2 bg-[var(--color-accent)] text-white rounded-md text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         fileInputRef.current?.click();

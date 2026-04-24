@@ -46,7 +46,7 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
           <button
             className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
               currentColorIndex === null
-                ? 'ring-2 ring-[#6366f1] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
+                ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
                 : 'border border-[var(--color-border)]'
             }`}
             style={{
@@ -71,7 +71,7 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
               key={index}
               className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
                 currentColorIndex === index
-                  ? 'ring-2 ring-[#6366f1] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
+                  ? 'ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
                   : ''
               }`}
               style={{ backgroundColor: '#' + color }}

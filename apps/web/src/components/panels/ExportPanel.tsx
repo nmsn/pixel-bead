@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Download } from 'lucide-react';
 
 interface ExportPanelProps {
   onExportPng: (size: number) => void;
@@ -39,20 +40,20 @@ export function ExportPanel({
 
   return (
     <div className="w-full h-full bg-[var(--color-surface)] border-l border-[var(--color-border)] flex flex-col">
-      <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
+      <div className="p-4 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-medium text-[var(--color-text-primary)]">导出格式</h2>
       </div>
 
-      <div className="p-4 flex-col flex flex-1 overflow-y-auto">
+      <div className="p-4 flex flex-col flex-1 overflow-y-auto">
         {/* Format cards */}
-        <div className="space-y-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1">
           {FORMAT_CARDS.map((format) => (
             <button
               key={format.id}
               onClick={() => setSelectedFormat(format.id)}
-              className={`w-full p-3 rounded-lg border transition-all text-left ${
+              className={`w-full p-3 rounded-lg border text-left transition-all ${
                 selectedFormat === format.id
-                  ? 'border-[#6366f1] bg-[#6366f1]/10 text-[var(--color-text-primary)]'
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-text-primary)]'
                   : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:border-[var(--color-hover)]'
               }`}
             >
@@ -62,18 +63,18 @@ export function ExportPanel({
           ))}
         </div>
 
-        {/* PNG size chips - only show when PNG is selected */}
+        {/* PNG size chips */}
         {selectedFormat === 'png' && (
-          <div className="mt-4 mb-4">
-            <h3 className="text-xs text-[var(--color-text-secondary)] uppercase mb-2">尺寸</h3>
-            <div className="flex flex-wrap gap-1">
+          <div className="mt-4">
+            <h3 className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">尺寸</h3>
+            <div className="flex flex-wrap gap-1.5">
               {PNG_SIZES.map((size) => (
                 <button
                   key={size}
                   onClick={() => togglePngSize(size)}
-                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                     selectedPngSizes.includes(size)
-                      ? 'bg-[#6366f1] text-white'
+                      ? 'bg-[var(--color-accent)] text-white'
                       : 'bg-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-hover)]'
                   }`}
                 >
@@ -87,9 +88,10 @@ export function ExportPanel({
         {/* Download button */}
         <button
           onClick={handleDownload}
-          className="w-full h-10 rounded bg-[#6366f1] text-white text-sm font-medium hover:bg-[#6366f1]/90 transition-colors mt-auto"
+          className="w-full h-10 rounded-lg bg-[var(--color-accent)] text-white text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors mt-auto flex items-center justify-center gap-2"
         >
-          下载 {selectedFormat.toUpperCase()}
+          <Download size={16} />
+          <span>下载 {selectedFormat.toUpperCase()}</span>
         </button>
       </div>
     </div>

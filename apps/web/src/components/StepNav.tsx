@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import type { Step } from '../hooks/useStepNavigation';
 
 interface StepNavProps {
@@ -16,26 +17,44 @@ const STEPS: { step: Step; label: string }[] = [
 
 export function StepNav({ currentStep, onStepChange, completedSteps }: StepNavProps) {
   return (
-    <div className="flex items-center justify-center gap-2 py-3 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-      {STEPS.map((s, i) => (
-        <React.Fragment key={s.step}>
-          <button
-            onClick={() => onStepChange(s.step)}
-            className={`w-7 h-7 rounded-full border-2 text-sm font-semibold transition-colors ${
-              currentStep === s.step
-                ? 'border-[#6366f1] bg-[#6366f1] text-white'
-                : completedSteps.has(s.step)
-                ? 'border-[#48bb78] bg-[#48bb78] text-white'
-                : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[#6366f1]'
-            }`}
-          >
-            {completedSteps.has(s.step) && s.step !== currentStep ? '✓' : s.step}
-          </button>
-          {i < STEPS.length - 1 && (
-            <div className="w-8 h-0.5 bg-[var(--color-border)]" />
-          )}
-        </React.Fragment>
-      ))}
+    <div className="flex items-center justify-center gap-3 py-3 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+      {STEPS.map((s, i) => {
+        const isActive = currentStep === s.step;
+        const isCompleted = completedSteps.has(s.step);
+        const isClickable = !isActive;
+
+        return (
+          <React.Fragment key={s.step}>
+            <button
+              onClick={() => isClickable && onStepChange(s.step)}
+              disabled={!isClickable}
+              className={`
+                w-8 h-8 rounded-full border-2 text-sm font-medium
+                flex items-center justify-center
+                transition-all duration-200
+                ${isActive
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-sm'
+                  : isCompleted
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
+                    : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'
+                }
+                ${!isClickable ? 'cursor-default' : 'cursor-pointer'}
+              `}
+            >
+              {isCompleted && !isActive ? (
+                <Check size={14} strokeWidth={3} />
+              ) : (
+                s.step
+              )}
+            </button>
+            {i < STEPS.length - 1 && (
+              <div className={`w-8 h-0.5 rounded ${
+                completedSteps.has(s.step) ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'
+              }`} />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
