@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "konva": "^9.3.6",
+    "lucide-react": "^1.9.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-konva": "^19.2.3"
