@@ -392,9 +392,9 @@ export function App() {
           />
         </div>
 
-        {/* Right panel */}
+        {/* Right panel - conditionally rendered based on step */}
         <div className="flex flex-col">
-          {state.selectedCells.size > 0 && (
+          {state.selectedCells.size > 0 && currentStep === 2 && (
             <SelectionPanel
               selectedCells={state.selectedCells}
               selectionStyle={state.selectionStyle}
@@ -409,6 +409,8 @@ export function App() {
               onClearSelection={clearSelection}
             />
           )}
+
+          {/* Step 3: Background effects panel */}
           {currentStep === 3 && (
             <BackgroundPanel
               backgroundType={backgroundType}
@@ -429,24 +431,32 @@ export function App() {
               gridSize={state.gridSize}
             />
           )}
-          <ExportPanel
-            gridData={state.gridData}
-            gridSize={state.gridSize}
-            backgroundType={backgroundType}
-            backgroundColor={backgroundColor}
-            gradientColors={gradientColors}
-            gradientAngle={gradientAngle}
-            glossEnabled={glossEnabled}
-            glossIntensity={glossIntensity}
-            cornerRadius={cornerRadius}
-            onExportPng={handleExportPng}
-            onExportIco={handleExportIco}
-            onExportIcns={handleExportIcns}
-          />
-          <ColorPalette
-            currentColorIndex={state.currentColorIndex}
-            onColorSelect={setCurrentColorIndex}
-          />
+
+          {/* Step 3 & 4: Export panel */}
+          {(currentStep === 3 || currentStep === 4) && (
+            <ExportPanel
+              gridData={state.gridData}
+              gridSize={state.gridSize}
+              backgroundType={backgroundType}
+              backgroundColor={backgroundColor}
+              gradientColors={gradientColors}
+              gradientAngle={gradientAngle}
+              glossEnabled={glossEnabled}
+              glossIntensity={glossIntensity}
+              cornerRadius={cornerRadius}
+              onExportPng={handleExportPng}
+              onExportIco={handleExportIco}
+              onExportIcns={handleExportIcns}
+            />
+          )}
+
+          {/* Color palette - shown in step 2 (editing) */}
+          {currentStep === 2 && (
+            <ColorPalette
+              currentColorIndex={state.currentColorIndex}
+              onColorSelect={setCurrentColorIndex}
+            />
+          )}
         </div>
       </div>
 
