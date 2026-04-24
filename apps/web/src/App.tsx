@@ -13,6 +13,7 @@ import { useStepNavigation } from './hooks/useStepNavigation';
 import { imageFileToImageData, pixelateImage } from './lib/pixelate';
 import { exportToPng, exportToIco } from './lib/exporters/toIco';
 import { exportToIcns } from './lib/exporters/toIcns';
+import { KonvaPreview } from './components/preview/KonvaPreview';
 import { Tool } from 'shared/src/types';
 
 const STORAGE_KEY = 'pixel-bead-project';
@@ -327,101 +328,167 @@ export function App() {
           document.documentElement.classList.toggle('dark', newIsDark);
         }}
         onUpload={() => setIsUploadModalOpen(true)}
+        showDrawingTools={currentStep === 2}
       />
 
       <StepNav currentStep={currentStep} onStepChange={goToStep} completedSteps={completedSteps} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Canvas area - only shown in step 2 (editing) */}
-        {currentStep === 2 && (
-          <div
-            className="flex-1 flex items-start justify-center pt-8 bg-canvas-bg"
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragOver(false);
-              const file = e.dataTransfer.files[0];
-              if (file && file.type.startsWith('image/')) {
-                handleFileDrop(file);
-              }
-            }}
-            onClick={() => {
-              if (state.gridData.length === 0) {
-                fileInputRef.current?.click();
-              }
-            }}
-          >
-            {/* Upload drop zone (shown when no image loaded) */}
-            {state.gridData.length === 0 && (
-              <div
-                className={`absolute inset-0 flex items-center justify-center z-10 ${
-                  isDragOver ? 'bg-[#6366f1]/20 border-2 border-[#6366f1]' : ''
-                }`}
-              >
-                <div className="text-center">
-                  <div className="text-4xl mb-4 text-[#71717a]">+</div>
-                  <div className="text-[#71717a] text-sm">Drop image or click to upload</div>
-                  <button
-                    className="mt-4 px-4 py-2 bg-[#6366f1] text-white rounded text-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                  >
-                    Upload Image
-                  </button>
+        {/* Main Center Area */}
+        <div className="flex-1 flex items-center justify-center bg-canvas-bg relative overflow-hidden">
+          {/* Step 2: Pixel Canvas */}
+          {currentStep === 2 && (
+            <div
+              className="absolute inset-0 flex items-start justify-center pt-8"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  handleFileDrop(file);
+                }
+              }}
+              onClick={() => {
+                if (state.gridData.length === 0) {
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
+              {/* Upload drop zone (shown when no image loaded) */}
+              {state.gridData.length === 0 && (
+                <div
+                  className={`absolute inset-0 flex items-center justify-center z-10 ${
+                    isDragOver ? 'bg-[#6366f1]/20 border-2 border-[#6366f1]' : ''
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-4xl mb-4 text-[#71717a]">+</div>
+                    <div className="text-[#71717a] text-sm">Drop image or click to upload</div>
+                    <button
+                      className="mt-4 px-4 py-2 bg-[#6366f1] text-white rounded text-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      Upload Image
+                    </button>
+                  </div>
                 </div>
+              )}
+
+              <PixelCanvas
+                gridData={state.gridData}
+                gridSize={state.gridSize}
+                zoom={state.zoom}
+                onCellClick={handleCellClick}
+                onCellDrag={handleCellDrag}
+                panOffset={panOffset}
+                onPanChange={setPanOffset}
+                onZoomChange={setZoom}
+                selectedCells={state.selectedCells}
+                selectionStyle={state.selectionStyle}
+                isDark={isDark}
+              />
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileDrop(file);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Step 3: Pure Background Preview */}
+          {currentStep === 3 && (
+            <div className="flex items-center justify-center w-full h-full p-8">
+              <div
+                className="w-[320px] h-[320px] lg:w-[480px] lg:h-[480px] shadow-lg transition-all duration-300 relative overflow-hidden"
+                style={{
+                  background:
+                    backgroundType === 'solid'
+                      ? backgroundColor
+                      : `linear-gradient(${gradientAngle}deg, ${gradientColors.join(', ')})`,
+                  // 假设基准图标大小为 64x64，根据其实际代表的比例转换为百分比
+                  // max cornerRadius is 32, which is 50% of 64
+                  borderRadius: `${(cornerRadius / 64) * 100}%`,
+                }}
+              >
+                {/* Gloss Overlay Layer */}
+                {glossEnabled && glossIntensity > 0 && (
+                  <div
+                    className="absolute top-0 left-0 w-full h-1/2 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(to bottom, rgba(255, 255, 255, ${glossIntensity / 100}), rgba(255, 255, 255, 0))`,
+                    }}
+                  />
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            <PixelCanvas
-              gridData={state.gridData}
-              gridSize={state.gridSize}
-              zoom={state.zoom}
-              onCellClick={handleCellClick}
-              onCellDrag={handleCellDrag}
-              panOffset={panOffset}
-              onPanChange={setPanOffset}
-              onZoomChange={setZoom}
-              selectedCells={state.selectedCells}
-              selectionStyle={state.selectionStyle}
-              isDark={isDark}
-            />
+          {/* Step 4: Large Preview with Konva */}
+          {currentStep === 4 && (
+            <div className="flex items-center justify-center w-full h-full p-8">
+              <div className="w-[320px] h-[320px] lg:w-[480px] lg:h-[480px] bg-[var(--color-surface)] rounded-xl shadow-lg border border-[var(--color-border)] flex items-center justify-center overflow-hidden transition-all duration-300">
+                <KonvaPreview
+                  gridData={state.gridData}
+                  gridSize={state.gridSize}
+                  backgroundType={backgroundType}
+                  backgroundColor={backgroundColor}
+                  gradientColors={gradientColors}
+                  gradientAngle={gradientAngle}
+                  glossEnabled={glossEnabled}
+                  glossIntensity={glossIntensity}
+                  cornerRadius={cornerRadius}
+                  width={480}
+                  height={480}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileDrop(file);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Right panel - conditionally rendered based on step */}
-        <div className="flex flex-col">
-          {state.selectedCells.size > 0 && currentStep === 2 && (
-            <SelectionPanel
-              selectedCells={state.selectedCells}
-              selectionStyle={state.selectionStyle}
-              onStyleChange={setSelectionStyle}
-              onColorChange={() => applyColorToSelection(state.currentColorIndex)}
-              onSelectAllByColor={() => {
-                const first = [...state.selectedCells][0];
-                if (!first) return;
-                const [r, c] = first.split(',').map(Number);
-                selectAllByColor(state.gridData[r][c]);
-              }}
-              onClearSelection={clearSelection}
-            />
+        {/* Right Sidebar - 320px fixed width */}
+        <div className="w-[320px] flex-shrink-0 flex flex-col bg-[var(--color-surface)]">
+          {/* Step 2 panels */}
+          {currentStep === 2 && (
+            <div className="flex flex-col h-full">
+              {state.selectedCells.size > 0 && (
+                <div className="flex-shrink-0 border-b border-[var(--color-border)]">
+                  <SelectionPanel
+                    selectedCells={state.selectedCells}
+                    selectionStyle={state.selectionStyle}
+                    onStyleChange={setSelectionStyle}
+                    onColorChange={() => applyColorToSelection(state.currentColorIndex)}
+                    onSelectAllByColor={() => {
+                      const first = [...state.selectedCells][0];
+                      if (!first) return;
+                      const [r, c] = first.split(',').map(Number);
+                      selectAllByColor(state.gridData[r][c]);
+                    }}
+                    onClearSelection={clearSelection}
+                  />
+                </div>
+              )}
+              <div className="flex-1 overflow-hidden">
+                <ColorPalette
+                  currentColorIndex={state.currentColorIndex}
+                  onColorSelect={setCurrentColorIndex}
+                />
+              </div>
+            </div>
           )}
 
           {/* Step 3: Background effects panel */}
@@ -441,34 +508,15 @@ export function App() {
               onGlossEnabledChange={setGlossEnabled}
               glossIntensity={glossIntensity}
               onGlossIntensityChange={setGlossIntensity}
-              gridData={state.gridData}
-              gridSize={state.gridSize}
             />
           )}
 
-          {/* Step 4: Export panel only */}
+          {/* Step 4: Export panel */}
           {currentStep === 4 && (
             <ExportPanel
-              gridData={state.gridData}
-              gridSize={state.gridSize}
-              backgroundType={backgroundType}
-              backgroundColor={backgroundColor}
-              gradientColors={gradientColors}
-              gradientAngle={gradientAngle}
-              glossEnabled={glossEnabled}
-              glossIntensity={glossIntensity}
-              cornerRadius={cornerRadius}
               onExportPng={handleExportPng}
               onExportIco={handleExportIco}
               onExportIcns={handleExportIcns}
-            />
-          )}
-
-          {/* Color palette - shown in step 2 (editing) */}
-          {currentStep === 2 && (
-            <ColorPalette
-              currentColorIndex={state.currentColorIndex}
-              onColorSelect={setCurrentColorIndex}
             />
           )}
         </div>

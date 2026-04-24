@@ -41,11 +41,13 @@ export function renderToCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return canvas.toDataURL('image/png');
 
+  const scaledCornerRadius = cornerRadius * (outputSize / 64);
+
   // Draw rounded background only when explicitly provided (transparent by default)
   if (backgroundColor && !gradientColors) {
     ctx.fillStyle = backgroundColor;
     ctx.beginPath();
-    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.roundRect(0, 0, outputSize, outputSize, scaledCornerRadius);
     ctx.fill();
   }
 
@@ -64,7 +66,7 @@ export function renderToCanvas(
     });
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.roundRect(0, 0, outputSize, outputSize, scaledCornerRadius);
     ctx.fill();
   }
 
@@ -75,7 +77,7 @@ export function renderToCanvas(
     glossGradient.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = glossGradient;
     ctx.beginPath();
-    ctx.roundRect(0, 0, outputSize, outputSize, cornerRadius);
+    ctx.roundRect(0, 0, outputSize, outputSize, scaledCornerRadius);
     ctx.fill();
   }
 

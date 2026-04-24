@@ -139,7 +139,7 @@ export function KonvaPreview({
               width={width}
               height={height}
               fill={backgroundColor}
-              cornerRadius={cornerRadius}
+              cornerRadius={cornerRadius * (width / 64)}
             />
           ) : (
             <Rect
@@ -153,7 +153,7 @@ export function KonvaPreview({
                 gradientStops[i],
                 color,
               ])}
-              cornerRadius={cornerRadius}
+              cornerRadius={cornerRadius * (width / 64)}
             />
           )}
         </Layer>

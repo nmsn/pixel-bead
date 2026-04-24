@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { PALETTE } from '../../lib/palette-256';
 
 interface ColorPaletteProps {
@@ -7,22 +6,15 @@ interface ColorPaletteProps {
 }
 
 export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleColor = currentColorIndex === null ? '#ccc' : '#' + PALETTE.colors[currentColorIndex];
-
   return (
-    <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
-      {/* Toggle */}
-      <button
-        className="w-full h-10 flex items-center justify-between px-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface)] transition-colors"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="text-sm text-[var(--color-text-secondary)]">Palette</span>
+    <div className="w-full flex flex-col h-full bg-[var(--color-surface)] border-l border-[var(--color-border)]">
+      {/* Header */}
+      <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
+        <h2 className="text-sm font-medium text-[var(--color-text-primary)]">调色板</h2>
         <div className="flex items-center gap-2">
           {currentColorIndex === null ? (
             <div
-              className="w-5 h-5 rounded border border-[var(--color-border)]"
+              className="w-6 h-6 rounded border border-[var(--color-border)]"
               style={{
                 backgroundImage: `
                   linear-gradient(45deg, #ccc 25%, transparent 25%),
@@ -37,61 +29,58 @@ export function ColorPalette({ currentColorIndex, onColorSelect }: ColorPaletteP
             />
           ) : (
             <div
-              className="w-5 h-5 rounded border border-[var(--color-border)]"
+              className="w-6 h-6 rounded border border-[var(--color-border)] shadow-sm"
               style={{ backgroundColor: '#' + PALETTE.colors[currentColorIndex] }}
             />
           )}
-          <span className="text-xs text-[var(--color-text-secondary)]">{isOpen ? '▲' : '▼'}</span>
         </div>
-      </button>
+      </div>
 
       {/* Palette grid */}
-      {isOpen && (
-        <div className="p-2 bg-[var(--color-surface)]">
-          <div
-            className="grid gap-px"
-            style={{ gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}
-          >
-            {/* Transparent swatch */}
+      <div className="p-4 flex-1 overflow-y-auto">
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: 'repeat(12, minmax(0, 1fr))' }}
+        >
+          {/* Transparent swatch */}
+          <button
+            className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
+              currentColorIndex === null
+                ? 'ring-2 ring-[#6366f1] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
+                : 'border border-[var(--color-border)]'
+            }`}
+            style={{
+              backgroundImage: `
+                linear-gradient(45deg, #ccc 25%, transparent 25%),
+                linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #ccc 75%),
+                linear-gradient(-45deg, transparent 75%, #ccc 75%)
+              `,
+              backgroundSize: '8px 8px',
+              backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+              backgroundColor: 'white',
+            }}
+            onClick={() => onColorSelect(null)}
+            data-transparent="true"
+            title="Transparent"
+          />
+
+          {/* Palette colors - index 0-255 maps to grid position 1-256 */}
+          {PALETTE.colors.map((color, index) => (
             <button
+              key={index}
               className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
-                currentColorIndex === null
-                  ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
+                currentColorIndex === index
+                  ? 'ring-2 ring-[#6366f1] ring-offset-2 ring-offset-[var(--color-surface)] z-10'
                   : ''
               }`}
-              style={{
-                backgroundImage: `
-                  linear-gradient(45deg, #ccc 25%, transparent 25%),
-                  linear-gradient(-45deg, #ccc 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #ccc 75%),
-                  linear-gradient(-45deg, transparent 75%, #ccc 75%)
-                `,
-                backgroundSize: '8px 8px',
-                backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
-                backgroundColor: 'white',
-              }}
-              onClick={() => onColorSelect(null)}
-              data-transparent="true"
-              title="Transparent"
+              style={{ backgroundColor: '#' + color }}
+              onClick={() => onColorSelect(index)}
+              title={`#${color}`}
             />
-
-            {/* Palette colors - index 0-255 maps to grid position 1-256 */}
-            {PALETTE.colors.map((color, index) => (
-              <button
-                key={index}
-                className={`w-full aspect-square rounded-sm transition-transform hover:scale-110 ${
-                  currentColorIndex === index
-                    ? 'ring-2 ring-[#6366f1] ring-offset-1 ring-offset-[var(--color-surface)]'
-                    : ''
-                }`}
-                style={{ backgroundColor: '#' + color }}
-                onClick={() => onColorSelect(index)}
-                title={`#${color}`}
-              />
-            ))}
-          </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

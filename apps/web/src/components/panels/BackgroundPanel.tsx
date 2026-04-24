@@ -7,11 +7,8 @@ interface BackgroundPanelProps {
   gradientColors: string[];
   gradientAngle: number;
   cornerRadius: number;
-  iconScale: number;
   glossEnabled: boolean;
   glossIntensity: number;
-  gridSize: [number, number];
-  gridData: number[][];
   onBackgroundColorChange: (color: string) => void;
   onBackgroundTypeChange: (type: 'solid' | 'gradient') => void;
   onGradientColorsChange: (colors: string[]) => void;
@@ -27,11 +24,8 @@ export function BackgroundPanel({
   gradientColors,
   gradientAngle,
   cornerRadius,
-  iconScale,
   glossEnabled,
   glossIntensity,
-  gridSize,
-  gridData,
   onBackgroundColorChange,
   onBackgroundTypeChange,
   onGradientColorsChange,
@@ -40,7 +34,6 @@ export function BackgroundPanel({
   onGlossEnabledChange,
   onGlossIntensityChange,
 }: BackgroundPanelProps) {
-  const previewRef = useRef<HTMLCanvasElement>(null);
   const dialRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -85,94 +78,6 @@ export function BackgroundPanel({
     };
   }, [isDragging, getAngleFromEvent, onGradientAngleChange]);
 
-  // Render preview
-  useEffect(() => {
-    const canvas = previewRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const [cols, rows] = gridSize;
-    const padding = 16;
-    const bgSize = canvas.width - padding * 2;
-
-    // Clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw checkerboard for transparency
-    const checkSize = 8;
-    for (let y = 0; y < canvas.height; y += checkSize) {
-      for (let x = 0; x < canvas.width; x += checkSize) {
-        ctx.fillStyle = ((x + y) / checkSize) % 2 === 0 ? '#fff' : '#ddd';
-        ctx.fillRect(x, y, checkSize, checkSize);
-      }
-    }
-
-    // Draw background (solid or gradient)
-    if (backgroundType === 'gradient' && gradientColors.length >= 2) {
-      const angleRad = (gradientAngle - 90) * (Math.PI / 180);
-      const x1 = padding + bgSize / 2 - Math.cos(angleRad) * bgSize / 2;
-      const y1 = padding + bgSize / 2 - Math.sin(angleRad) * bgSize / 2;
-      const x2 = padding + bgSize / 2 + Math.cos(angleRad) * bgSize / 2;
-      const y2 = padding + bgSize / 2 + Math.sin(angleRad) * bgSize / 2;
-
-      const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-      gradientColors.forEach((color, i) => {
-        gradient.addColorStop(i / (gradientColors.length - 1), color);
-      });
-
-      ctx.fillStyle = gradient;
-    } else {
-      ctx.fillStyle = backgroundColor;
-    }
-
-    if (cornerRadius > 0) {
-      ctx.beginPath();
-      ctx.roundRect(padding, padding, bgSize, bgSize, cornerRadius);
-      ctx.fill();
-    } else {
-      ctx.fillRect(padding, padding, bgSize, bgSize);
-    }
-
-    // Draw gloss overlay
-    if (glossEnabled) {
-      const glossGradient = ctx.createLinearGradient(padding, padding, padding, padding + bgSize / 2);
-      glossGradient.addColorStop(0, `rgba(255, 255, 255, ${glossIntensity / 200})`);
-      glossGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-      ctx.fillStyle = glossGradient;
-      if (cornerRadius > 0) {
-        ctx.beginPath();
-        ctx.roundRect(padding, padding, bgSize, bgSize / 2, [cornerRadius, cornerRadius, 0, 0]);
-        ctx.fill();
-      } else {
-        ctx.fillRect(padding, padding, bgSize, bgSize / 2);
-      }
-    }
-
-    // Calculate icon size based on scale
-    const iconSize = bgSize * iconScale;
-    const cellSize = iconSize / Math.max(cols, rows);
-    const offsetX = padding + (bgSize - iconSize) / 2;
-    const offsetY = padding + (bgSize - iconSize) / 2;
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const colorIndex = gridData[row]?.[col];
-        if (colorIndex !== -1 && colorIndex !== undefined) {
-          ctx.fillStyle = '#' + PALETTE.colors[colorIndex];
-          ctx.fillRect(
-            offsetX + col * cellSize,
-            offsetY + row * cellSize,
-            cellSize,
-            cellSize
-          );
-        }
-      }
-    }
-  }, [backgroundColor, backgroundType, gradientColors, gradientAngle, cornerRadius, iconScale, glossEnabled, glossIntensity, gridSize, gridData]);
-
   const handleAddColorStop = () => {
     // Add a new color stop between the last two colors
     const lastColor = gradientColors[gradientColors.length - 1];
@@ -193,28 +98,12 @@ export function BackgroundPanel({
   };
 
   return (
-    <div className="w-[280px] bg-surface border-l border-border flex flex-col">
+    <div className="w-full h-full bg-surface border-l border-border flex flex-col">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-sm font-medium text-text-primary">背景效果</h2>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          {isExpanded ? '▼' : '▶'}
-        </button>
       </div>
 
-      {isExpanded && (
-        <div className="p-4 space-y-4">
-          {/* Preview */}
-          <div className="flex justify-center">
-            <canvas
-              ref={previewRef}
-              width={128}
-              height={128}
-              className="border border-border rounded"
-            />
-          </div>
+      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
 
           {/* Background Type Toggle */}
           <div className="flex items-center gap-2">
@@ -373,8 +262,7 @@ export function BackgroundPanel({
               <span className="text-xs text-text-primary font-mono w-12 text-right">{glossIntensity}</span>
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

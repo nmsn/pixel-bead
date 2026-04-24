@@ -14,6 +14,7 @@ interface TopToolbarProps {
   onReset: () => void;
   isDark: boolean;
   onThemeToggle: () => void;
+  showDrawingTools: boolean;
 }
 
 const GRID_SIZES: [number, number][] = [
@@ -42,66 +43,71 @@ export function TopToolbar({
   onReset,
   isDark,
   onThemeToggle,
+  showDrawingTools,
 }: TopToolbarProps) {
   return (
     <div className="h-12 bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-4 gap-2">
-      {/* Undo/Redo */}
-      <div className="flex items-center gap-1 mr-4">
-        <button
-          className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
-          onClick={onUndo}
-          disabled={!canUndo}
-          title="Undo (Ctrl+Z)"
-        >
-          ←
-        </button>
-        <button
-          className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
-          onClick={onRedo}
-          disabled={!canRedo}
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          →
-        </button>
-      </div>
+      {showDrawingTools && (
+        <>
+          {/* Undo/Redo */}
+          <div className="flex items-center gap-1 mr-4">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Undo (Ctrl+Z)"
+            >
+              ←
+            </button>
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded text-[var(--color-text-primary)] hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              →
+            </button>
+          </div>
 
-      <div className="w-px h-6 bg-[var(--color-border)]" />
+          <div className="w-px h-6 bg-[var(--color-border)]" />
 
-      {/* Tools */}
-      <div className="flex items-center gap-1">
-        {TOOLS.map((t) => (
-          <button
-            key={t.id}
-            className={`w-8 h-8 flex items-center justify-center rounded text-lg ${
-              tool === t.id
-                ? 'bg-[#6366f1] text-white'
-                : 'text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
-            }`}
-            onClick={() => onToolChange(t.id)}
-            title={`${t.label} (${t.key})`}
+          {/* Tools */}
+          <div className="flex items-center gap-1">
+            {TOOLS.map((t) => (
+              <button
+                key={t.id}
+                className={`w-8 h-8 flex items-center justify-center rounded text-lg ${
+                  tool === t.id
+                    ? 'bg-[#6366f1] text-white'
+                    : 'text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
+                }`}
+                onClick={() => onToolChange(t.id)}
+                title={`${t.label} (${t.key})`}
+              >
+                {t.icon}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-6 bg-[var(--color-border)]" />
+
+          {/* Grid size */}
+          <select
+            className="h-8 px-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm"
+            value={`${gridSize[0]}x${gridSize[1]}`}
+            onChange={(e) => {
+              const [w, h] = e.target.value.split('x').map(Number);
+              onGridSizeChange([w, h]);
+            }}
           >
-            {t.icon}
-          </button>
-        ))}
-      </div>
-
-      <div className="w-px h-6 bg-[var(--color-border)]" />
-
-      {/* Grid size */}
-      <select
-        className="h-8 px-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm"
-        value={`${gridSize[0]}x${gridSize[1]}`}
-        onChange={(e) => {
-          const [w, h] = e.target.value.split('x').map(Number);
-          onGridSizeChange([w, h]);
-        }}
-      >
-        {GRID_SIZES.map(([w, h]) => (
-          <option key={`${w}x${h}`} value={`${w}x${h}`}>
-            {w}×{h}
-          </option>
-        ))}
-      </select>
+            {GRID_SIZES.map(([w, h]) => (
+              <option key={`${w}x${h}`} value={`${w}x${h}`}>
+                {w}×{h}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />
