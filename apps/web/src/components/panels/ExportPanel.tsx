@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { renderToCanvas } from '../../lib/exporters/toIco';
 
 interface ExportPanelProps {
   gridData: number[][];
   gridSize: [number, number];
+  backgroundType?: 'solid' | 'gradient';
+  backgroundColor?: string;
   gradientAngle?: number;
   gradientColors?: string[];
   glossEnabled?: boolean;
@@ -23,6 +26,8 @@ const FORMAT_CARDS = [
 export function ExportPanel({
   gridData,
   gridSize,
+  backgroundType = 'solid',
+  backgroundColor = '#ffffff',
   gradientAngle = 135,
   gradientColors = ['#667eea', '#764ba2'],
   glossEnabled = false,
@@ -34,6 +39,30 @@ export function ExportPanel({
 }: ExportPanelProps) {
   const [selectedFormat, setSelectedFormat] = useState<string>('png');
   const [selectedPngSizes, setSelectedPngSizes] = useState<number[]>([32, 64]);
+  const previewRef = useRef<HTMLCanvasElement>(null);
+
+  // Render preview
+  useEffect(() => {
+    const canvas = previewRef.current;
+    if (!canvas || gridData.length === 0) return;
+
+    const dataUrl = renderToCanvas(gridData, gridSize, 180, {
+      backgroundColor: backgroundType === 'solid' ? backgroundColor : undefined,
+      gradientColors: backgroundType === 'gradient' ? gradientColors : undefined,
+      gradientAngle: backgroundType === 'gradient' ? gradientAngle : undefined,
+      glossEnabled,
+      glossIntensity,
+      cornerRadius,
+    });
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, 180, 180);
+    };
+    img.src = dataUrl;
+  }, [gridData, gridSize, backgroundType, backgroundColor, gradientColors, gradientAngle, glossEnabled, glossIntensity, cornerRadius]);
 
   const togglePngSize = (size: number) => {
     setSelectedPngSizes((prev) =>
@@ -110,7 +139,7 @@ export function ExportPanel({
       <div className="flex-1 bg-[var(--color-bg)] flex flex-col items-center justify-center p-6">
         {/* Preview canvas 180x180 */}
         <div className="w-[180px] h-[180px] bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] flex items-center justify-center mb-4">
-          <canvas width={180} height={180} className="rounded" />
+          <canvas ref={previewRef} width={180} height={180} className="rounded" />
         </div>
 
         {/* Config tags */}
