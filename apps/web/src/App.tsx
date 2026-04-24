@@ -434,8 +434,8 @@ export function App() {
             />
           )}
 
-          {/* Step 3 & 4: Export panel */}
-          {(currentStep === 3 || currentStep === 4) && (
+          {/* Step 4: Export panel only */}
+          {currentStep === 4 && (
             <ExportPanel
               gridData={state.gridData}
               gridSize={state.gridSize}
