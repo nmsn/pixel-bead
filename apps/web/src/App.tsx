@@ -320,77 +320,79 @@ export function App() {
       <StepNav currentStep={currentStep} onStepChange={goToStep} completedSteps={completedSteps} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Canvas area */}
-        <div
-          className="flex-1 flex items-start justify-center pt-8 bg-canvas-bg"
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragOver(false);
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-              handleFileDrop(file);
-            }
-          }}
-          onClick={() => {
-            if (state.gridData.length === 0) {
-              fileInputRef.current?.click();
-            }
-          }}
-        >
-          {/* Upload drop zone (shown when no image loaded) */}
-          {state.gridData.length === 0 && (
-            <div
-              className={`absolute inset-0 flex items-center justify-center z-10 ${
-                isDragOver ? 'bg-[#6366f1]/20 border-2 border-[#6366f1]' : ''
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-4xl mb-4 text-[#71717a]">+</div>
-                <div className="text-[#71717a] text-sm">Drop image or click to upload</div>
-                <button
-                  className="mt-4 px-4 py-2 bg-[#6366f1] text-white rounded text-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  Upload Image
-                </button>
-              </div>
-            </div>
-          )}
-
-          <PixelCanvas
-            gridData={state.gridData}
-            gridSize={state.gridSize}
-            zoom={state.zoom}
-            onCellClick={handleCellClick}
-            onCellDrag={handleCellDrag}
-            panOffset={panOffset}
-            onPanChange={setPanOffset}
-            onZoomChange={setZoom}
-            selectedCells={state.selectedCells}
-            selectionStyle={state.selectionStyle}
-            isDark={isDark}
-          />
-
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileDrop(file);
+        {/* Canvas area - only shown in step 2 (editing) */}
+        {currentStep === 2 && (
+          <div
+            className="flex-1 flex items-start justify-center pt-8 bg-canvas-bg"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
             }}
-          />
-        </div>
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              const file = e.dataTransfer.files[0];
+              if (file && file.type.startsWith('image/')) {
+                handleFileDrop(file);
+              }
+            }}
+            onClick={() => {
+              if (state.gridData.length === 0) {
+                fileInputRef.current?.click();
+              }
+            }}
+          >
+            {/* Upload drop zone (shown when no image loaded) */}
+            {state.gridData.length === 0 && (
+              <div
+                className={`absolute inset-0 flex items-center justify-center z-10 ${
+                  isDragOver ? 'bg-[#6366f1]/20 border-2 border-[#6366f1]' : ''
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-4xl mb-4 text-[#71717a]">+</div>
+                  <div className="text-[#71717a] text-sm">Drop image or click to upload</div>
+                  <button
+                    className="mt-4 px-4 py-2 bg-[#6366f1] text-white rounded text-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Upload Image
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <PixelCanvas
+              gridData={state.gridData}
+              gridSize={state.gridSize}
+              zoom={state.zoom}
+              onCellClick={handleCellClick}
+              onCellDrag={handleCellDrag}
+              panOffset={panOffset}
+              onPanChange={setPanOffset}
+              onZoomChange={setZoom}
+              selectedCells={state.selectedCells}
+              selectionStyle={state.selectionStyle}
+              isDark={isDark}
+            />
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileDrop(file);
+              }}
+            />
+          </div>
+        )}
 
         {/* Right panel - conditionally rendered based on step */}
         <div className="flex flex-col">
