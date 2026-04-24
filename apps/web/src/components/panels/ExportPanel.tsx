@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { renderToCanvas } from '../../lib/exporters/toIco';
+import { useState } from 'react';
+import { KonvaPreview } from '../preview/KonvaPreview';
 
 interface ExportPanelProps {
   gridData: number[][];
@@ -39,30 +39,6 @@ export function ExportPanel({
 }: ExportPanelProps) {
   const [selectedFormat, setSelectedFormat] = useState<string>('png');
   const [selectedPngSizes, setSelectedPngSizes] = useState<number[]>([32, 64]);
-  const previewRef = useRef<HTMLCanvasElement>(null);
-
-  // Render preview
-  useEffect(() => {
-    const canvas = previewRef.current;
-    if (!canvas || gridData.length === 0) return;
-
-    const dataUrl = renderToCanvas(gridData, gridSize, 180, {
-      backgroundColor: backgroundType === 'solid' ? backgroundColor : undefined,
-      gradientColors: backgroundType === 'gradient' ? gradientColors : undefined,
-      gradientAngle: backgroundType === 'gradient' ? gradientAngle : undefined,
-      glossEnabled,
-      glossIntensity,
-      cornerRadius,
-    });
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, 180, 180);
-    };
-    img.src = dataUrl;
-  }, [gridData, gridSize, backgroundType, backgroundColor, gradientColors, gradientAngle, glossEnabled, glossIntensity, cornerRadius]);
 
   const togglePngSize = (size: number) => {
     setSelectedPngSizes((prev) =>
@@ -138,8 +114,20 @@ export function ExportPanel({
       {/* Right side - preview (2/3 width) */}
       <div className="flex-1 bg-[var(--color-bg)] flex flex-col items-center justify-center p-6">
         {/* Preview canvas 180x180 */}
-        <div className="w-[180px] h-[180px] bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] flex items-center justify-center mb-4">
-          <canvas ref={previewRef} width={180} height={180} className="rounded" />
+        <div className="w-[180px] h-[180px] bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] flex items-center justify-center mb-4 overflow-hidden">
+          <KonvaPreview
+            gridData={gridData}
+            gridSize={gridSize}
+            backgroundType={backgroundType}
+            backgroundColor={backgroundColor}
+            gradientColors={gradientColors}
+            gradientAngle={gradientAngle}
+            glossEnabled={glossEnabled}
+            glossIntensity={glossIntensity}
+            cornerRadius={cornerRadius}
+            width={180}
+            height={180}
+          />
         </div>
 
         {/* Config tags */}
