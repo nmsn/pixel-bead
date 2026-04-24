@@ -1,5 +1,5 @@
 import { Layer, Rect, Stage } from 'react-konva';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { PALETTE } from '../../lib/palette-256';
 import type { KonvaEventObject } from 'konva/lib/Node';
 
@@ -44,7 +44,6 @@ export function KonvaPreview({
   width,
   height,
 }: KonvaPreviewProps) {
-  const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(INITIAL_SCALE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -108,7 +107,7 @@ export function KonvaPreview({
     backgroundType === 'gradient' ? getGradientStops(gradientColors) : [];
 
   // Convert angle to radians for gradient
-  const angleRad = angleToRadians(gradientAngle);
+  const angleRad = angleToRadians(gradientAngle ?? 135);
   const sinAngle = Math.sin(angleRad);
   const cosAngle = Math.cos(angleRad);
 
@@ -122,7 +121,7 @@ export function KonvaPreview({
   const gradEndY = centerY + sinAngle * diagonal;
 
   return (
-    <div ref={stageRef} style={{ width, height }}>
+    <div style={{ width, height }}>
       <Stage
         width={width}
         height={height}
@@ -200,7 +199,7 @@ export function KonvaPreview({
               fillLinearGradientEndPoint={{ x: 0, y: height / 2 }}
               fillLinearGradientColorStops={[
                 0,
-                `rgba(255, 255, 255, ${glossIntensity})`,
+                `rgba(255, 255, 255, ${glossIntensity / 100})`,
                 1,
                 'rgba(255, 255, 255, 0)',
               ]}
